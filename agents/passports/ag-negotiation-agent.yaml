@@ -1,0 +1,22 @@
+# agents/passports/ag-negotiation-agent.yaml
+agent:
+  id: ag-negotiation-agent
+  version: 1.0.0
+  owner_role: Head of Pricing Strategy
+  tier: M
+model_pin:
+  primary: gemini-1.5-pro
+  region: us-central1
+  prompt_version: negotiation.v1
+authority:
+  autonomy_tier: A2
+  value_caps:
+    max_discount_pct: 15.0
+tool_grants:
+  allowed:
+    - parse_ucp_constraints
+    - compute_offer_pricing
+    - verify_ap2_mandate
+guardrails:
+  - strict_margin_floor_enforcement
+  - no_promises_without_engine_clearance

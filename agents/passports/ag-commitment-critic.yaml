@@ -1,0 +1,25 @@
+# agents/passports/ag-commitment-critic.yaml
+agent:
+  id: ag-commitment-critic
+  version: 1.0.0
+  owner_role: Head of Risk & Fulfillment Governance
+  tier: M
+model_pin:
+  primary: gemini-1.5-pro
+  region: us-central1
+  prompt_version: critic.v1
+authority:
+  autonomy_tier: A0 # May block, NEVER acts or commits
+  value_caps:
+    max_order_usd: 0.0
+tool_grants:
+  allowed:
+    - compute_transit_feasibility
+    - compute_atp
+    - compute_margin
+    - get_carrier_cutoffs
+guardrails:
+  - armor_and_isolate
+  - fresh_context_only # Never inherits prior agent chain of thought
+  - fail_closed_on_error
+  - mandatory_resolution_path # Rejects generic objections

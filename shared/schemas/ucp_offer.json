@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/ucp_offer.json",
+  "title": "UCPOffer",
+  "description": "Commercial offer returned to a buyer agent conforming to the Universal Commerce Protocol (UCP).",
+  "type": "object",
+  "required": [
+    "offer_id",
+    "txn_id",
+    "sku",
+    "quantity",
+    "unit_price",
+    "total_price",
+    "currency",
+    "delivery_promise",
+    "expires_at",
+    "ttl_seconds"
+  ],
+  "properties": {
+    "offer_id": { "type": "string", "description": "Unique offer UUID" },
+    "txn_id": { "type": "string", "description": "Negotiation transaction ID" },
+    "sku": { "type": "string", "description": "Product SKU offered" },
+    "quantity": { "type": "integer", "minimum": 1, "description": "Offered quantity" },
+    "unit_price": { "type": "number", "minimum": 0.0, "description": "Unit price after any authorized policy discount" },
+    "total_price": { "type": "number", "minimum": 0.0, "description": "Total price including estimated tax and shipping" },
+    "currency": { "type": "string", "default": "USD", "description": "Currency code" },
+    "delivery_promise": {
+      "type": "object",
+      "required": ["fulfilment_node_id", "carrier_id", "estimated_delivery", "guaranteed"],
+      "properties": {
+        "fulfilment_node_id": { "type": "string" },
+        "carrier_id": { "type": "string" },
+        "estimated_delivery": { "type": "string", "format": "date-time" },
+        "guaranteed": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "expires_at": { "type": "string", "format": "date-time", "description": "Timestamp when this offer expires" },
+    "ttl_seconds": { "type": "integer", "default": 300, "description": "Time-to-live in seconds before pricing and stock recheck is mandatory" },
+    "mandate_nonce": { "type": "string", "description": "Nonce tied to the AP2 mandate to prevent replay attacks" },
+    "substitution_applied": { "type": "boolean", "default": false, "description": "True if this offer satisfies constraints via substitution" }
+  },
+  "additionalProperties": false
+}

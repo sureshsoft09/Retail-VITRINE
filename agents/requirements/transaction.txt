@@ -1,0 +1,8 @@
+# Lean dependencies for Vertex AI Agent Engine packaging
+google-cloud-aiplatform>=1.44.0
+google-adk>=0.1.0
+google-cloud-bigquery>=3.19.0
+google-cloud-firestore>=2.15.0
+httpx>=0.27.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0

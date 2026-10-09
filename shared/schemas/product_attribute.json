@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/product_attribute.json",
+  "title": "ProductAttribute",
+  "description": "Structured product attribute enriched with provenance, confidence, and auditability.",
+  "type": "object",
+  "required": ["sku", "name", "value", "confidence", "provenance", "regulated", "extracted_at"],
+  "properties": {
+    "sku": { "type": "string", "description": "Unique product SKU identifier" },
+    "name": { "type": "string", "description": "Attribute name (e.g. fabric_composition, sleeve_length, care_instructions)" },
+    "value": { "type": "string", "description": "Extracted or inferred attribute value" },
+    "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Model confidence score from 0.0 to 1.0" },
+    "provenance": {
+      "type": "string",
+      "enum": ["EXTRACTED_FROM_IMAGE", "INFERRED_FROM_ANALOGUES", "DOCAI_SPEC_SHEET", "SUPPLIER_RAW", "HUMAN_VERIFIED"],
+      "description": "Origin of the attribute value"
+    },
+    "source_uri": { "type": "string", "description": "URI to the raw image, spec sheet, or inference basis in GCS" },
+    "inference_basis": { "type": "string", "description": "Justification or prompt context when attribute is inferred" },
+    "regulated": { "type": "boolean", "description": "True if attribute is regulated (allergen, safety, compliance). Inferred values are locked from regulated claims" },
+    "extracted_at": { "type": "string", "format": "date-time", "description": "ISO 8601 extraction timestamp" }
+  },
+  "additionalProperties": false
+}

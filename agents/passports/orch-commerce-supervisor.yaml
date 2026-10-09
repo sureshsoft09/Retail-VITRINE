@@ -1,0 +1,27 @@
+# agents/passports/orch-commerce-supervisor.yaml
+agent:
+  id: orch-commerce-supervisor
+  version: 1.0.0
+  owner_role: Chief Commercial Officer
+  tier: M
+model_pin:
+  primary: gemini-1.5-pro
+  region: us-central1
+  prompt_version: supervisor.v1
+authority:
+  autonomy_tier: A2
+  value_caps:
+    max_order_usd: 250.0
+    max_discount_pct: 15.0
+tool_grants:
+  allowed:
+    - transfer_to_agent
+    - get_session_state
+    - update_session_state
+    - publish_step_event
+    - evaluate_commitment_gate
+    - append_ledger_record
+guardrails:
+  - armor_and_isolate
+  - validate_numeric_computation_ids
+  - fail_closed_on_critic_objection

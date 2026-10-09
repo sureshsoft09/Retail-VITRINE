@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/objection.json",
+  "title": "Objection",
+  "description": "Adversarial critique from ag-commitment-critic blocking an unfulfillable or unprofitable promise.",
+  "type": "object",
+  "required": [
+    "objection_id",
+    "condition_id",
+    "summary",
+    "detail",
+    "blocking",
+    "suggested_resolution"
+  ],
+  "properties": {
+    "objection_id": { "type": "string", "description": "Unique objection ID" },
+    "condition_id": {
+      "type": "string",
+      "description": "Specific gate condition violated (e.g. COND_01_CARRIER_CUTOFF, COND_02_ATP_SAFETY_STOCK, COND_05_MARGIN_FLOOR)"
+    },
+    "summary": { "type": "string", "description": "Concise summary of the blocking issue" },
+    "detail": { "type": "string", "description": "Detailed explanation with numerical delta (e.g. carrier cutoff missed by 6 hours)" },
+    "blocking": { "type": "boolean", "description": "If true, blocks commitment and triggers ag-substitution-strategist" },
+    "suggested_resolution": {
+      "type": "string",
+      "description": "Mandatory remediation action (e.g. substitute with SKU-9042 from DC-WEST or shift delivery window by +1 day)"
+    },
+    "evidence_ref": { "type": "string", "description": "Pointer to the input payload or computation_id that triggered the objection" }
+  },
+  "additionalProperties": false
+}

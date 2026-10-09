@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/promise_object.json",
+  "title": "PromiseObject",
+  "description": "Fulfilment and delivery promise candidate evaluated with deterministic calculators and evidence chains.",
+  "type": "object",
+  "required": [
+    "promise_id",
+    "sku",
+    "candidate_id",
+    "fulfilment_node_id",
+    "atp_units",
+    "carrier_id",
+    "carrier_cutoff",
+    "estimated_delivery",
+    "transit_hours",
+    "margin_pct",
+    "isochrone_feasible",
+    "computation_id"
+  ],
+  "properties": {
+    "promise_id": { "type": "string", "description": "Unique promise identifier" },
+    "sku": { "type": "string", "description": "SKU being promised" },
+    "candidate_id": { "type": "string", "description": "Identifier of the parallel promise candidate (e.g. candidate_0, candidate_1)" },
+    "fulfilment_node_id": { "type": "string", "description": "Store or DC node code fulfilling the order" },
+    "atp_units": { "type": "integer", "minimum": 0, "description": "Available-to-promise units computed by deterministic calculator" },
+    "carrier_id": { "type": "string", "description": "Logistics carrier handling delivery" },
+    "carrier_cutoff": { "type": "string", "format": "date-time", "description": "Last time carrier accepts packages for targeted delivery window" },
+    "estimated_delivery": { "type": "string", "format": "date-time", "description": "Promised delivery date-time" },
+    "transit_hours": { "type": "number", "minimum": 0.0, "description": "Transit time in hours calculated via Google Maps isochrones/matrix" },
+    "margin_pct": { "type": "number", "description": "Net margin percentage after landed and fulfilment costs" },
+    "isochrone_feasible": { "type": "boolean", "description": "True if delivery location is within feasible travel-time isochrone" },
+    "computation_id": { "type": "string", "description": "Audit hash of deterministic calculator inputs and outputs" },
+    "evidence_chain": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Traceable references to inventory snapshot, maps route id, and cutoff schedule"
+    }
+  },
+  "additionalProperties": false
+}

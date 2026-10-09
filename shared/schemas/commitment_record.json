@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/commitment_record.json",
+  "title": "CommitmentRecord",
+  "description": "Cryptographically chained record of an accepted commercial commitment written to BigQuery.",
+  "type": "object",
+  "required": [
+    "commitment_id",
+    "sequence_num",
+    "txn_id",
+    "prev_hash",
+    "current_hash",
+    "timestamp",
+    "sku",
+    "quantity",
+    "unit_price",
+    "currency",
+    "promised_delivery_date",
+    "fulfilment_node_id",
+    "carrier_id",
+    "buyer_agent_id",
+    "mandate_id",
+    "gate_evaluation_id"
+  ],
+  "properties": {
+    "commitment_id": { "type": "string", "description": "Unique commitment UUID" },
+    "sequence_num": { "type": "integer", "minimum": 1, "description": "Strictly monotonic sequence number in the ledger" },
+    "txn_id": { "type": "string", "description": "Parent transaction ID" },
+    "prev_hash": { "type": "string", "description": "SHA-256 hash of previous commitment record in the chain (genesis is 64 zeros)" },
+    "current_hash": { "type": "string", "description": "SHA-256 hash of this record's canonical payload concatenated with prev_hash" },
+    "timestamp": { "type": "string", "format": "date-time", "description": "ISO 8601 commitment timestamp" },
+    "sku": { "type": "string", "description": "Committed product SKU" },
+    "quantity": { "type": "integer", "minimum": 1, "description": "Committed quantity" },
+    "unit_price": { "type": "number", "minimum": 0.0, "description": "Agreed unit price" },
+    "currency": { "type": "string", "default": "USD", "description": "ISO 4217 currency code" },
+    "promised_delivery_date": { "type": "string", "format": "date-time", "description": "Promised delivery date and time" },
+    "fulfilment_node_id": { "type": "string", "description": "Node fulfilling the order" },
+    "carrier_id": { "type": "string", "description": "Assigned logistics carrier" },
+    "buyer_agent_id": { "type": "string", "description": "Authenticated buyer agent identity" },
+    "mandate_id": { "type": "string", "description": "Verified AP2 payment mandate ID" },
+    "gate_evaluation_id": { "type": "string", "description": "Reference to passed 11-condition gate evaluation" },
+    "metadata": {
+      "type": "object",
+      "description": "Optional audited metadata (e.g. margin_pct, substitution_applied)"
+    }
+  },
+  "additionalProperties": false
+}

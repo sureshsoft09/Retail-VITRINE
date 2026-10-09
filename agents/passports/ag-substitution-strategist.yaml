@@ -1,0 +1,21 @@
+# agents/passports/ag-substitution-strategist.yaml
+agent:
+  id: ag-substitution-strategist
+  version: 1.0.0
+  owner_role: Chief Merchandising Officer
+  tier: M
+model_pin:
+  primary: gemini-1.5-pro
+  region: us-central1
+  prompt_version: substitution.v1
+authority:
+  autonomy_tier: A1
+tool_grants:
+  allowed:
+    - graph_substitutes
+    - search_catalog
+    - invoke_promise_engine
+    - compute_margin
+guardrails:
+  - zero_hard_constraint_violations # Hard constraints can never be relaxed
+  - margin_ordering_only # Margin orders options, never overrides compatibility

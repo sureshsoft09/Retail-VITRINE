@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/negotiation_state.json",
+  "title": "NegotiationState",
+  "description": "Multi-turn negotiation state maintained across turns in Vertex AI Agent Engine Sessions.",
+  "type": "object",
+  "required": [
+    "txn_id",
+    "buyer_agent_id",
+    "turn_count",
+    "max_turns",
+    "status",
+    "constraints",
+    "candidate_promises",
+    "step_seq"
+  ],
+  "properties": {
+    "txn_id": { "type": "string", "description": "Unique transaction ID matching Agent Engine session_id" },
+    "buyer_agent_id": { "type": "string", "description": "Identity of the buyer agent" },
+    "turn_count": { "type": "integer", "minimum": 1, "description": "Current turn number in the negotiation" },
+    "max_turns": { "type": "integer", "default": 5, "description": "Maximum negotiation turns permitted before session termination" },
+    "status": {
+      "type": "string",
+      "enum": ["NEGOTIATING", "OFFER_MADE", "OBJECTION_RAISED", "ACCEPTED", "EXPIRED", "REJECTED"],
+      "description": "Lifecycle state of the negotiation"
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["delivery_pincode", "latest_delivery_date"],
+      "properties": {
+        "delivery_pincode": { "type": "string" },
+        "latest_delivery_date": { "type": "string", "format": "date-time" },
+        "max_budget": { "type": "number" },
+        "target_sku": { "type": "string" },
+        "required_attributes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "substitution_acceptable": { "type": "boolean", "default": true }
+      },
+      "additionalProperties": true
+    },
+    "active_offer": {
+      "oneOf": [
+        { "$ref": "ucp_offer.json" },
+        { "type": "null" }
+      ]
+    },
+    "candidate_promises": {
+      "type": "array",
+      "items": { "$ref": "promise_object.json" },
+      "description": "Candidate promises evaluated by promise.fanout"
+    },
+    "critic_objections": {
+      "type": "array",
+      "items": { "$ref": "objection.json" },
+      "description": "Any objections raised by ag-commitment-critic"
+    },
+    "step_seq": { "type": "integer", "default": 0, "description": "Monotonic sequence number for step events emitted to Firestore" },
+    "session_budget_cents": { "type": "integer", "description": "Token and model cost accumulator for this transaction" }
+  },
+  "additionalProperties": false
+}

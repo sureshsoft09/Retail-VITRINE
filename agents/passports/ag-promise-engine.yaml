@@ -1,0 +1,21 @@
+# agents/passports/ag-promise-engine.yaml
+agent:
+  id: ag-promise-engine
+  version: 1.0.0
+  owner_role: VP Supply Chain & Fulfillment
+  tier: M
+model_pin:
+  primary: gemini-1.5-pro
+  region: us-central1
+  prompt_version: promise.v1
+authority:
+  autonomy_tier: A1
+tool_grants:
+  allowed:
+    - promise_fanout
+    - compute_atp
+    - compute_transit_feasibility
+    - compute_margin
+guardrails:
+  - deterministic_short_circuit_first # Run math before LLM
+  - validate_numeric_computation_ids

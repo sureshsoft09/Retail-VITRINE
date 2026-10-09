@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  vitrine-bff:
+    build:
+      context: .
+      dockerfile: backend/deploy/bff.Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - GCP_PROJECT_ID=vitrine-dev
+      - GCP_REGION=us-central1
+      - UCP_SERVICE_URL=http://vitrine-ucp:8082
+    depends_on:
+      - mcp-catalog
+      - mcp-promise
+      - mcp-commerce
+
+  vitrine-ucp:
+    build:
+      context: .
+      dockerfile: backend/deploy/ucp.Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - GCP_PROJECT_ID=vitrine-dev
+      - GCP_REGION=us-central1
+
+  mcp-catalog:
+    build:
+      context: .
+      dockerfile: backend/deploy/bff.Dockerfile
+    command: ["uvicorn", "mcp-servers.catalog.main:app", "--host", "0.0.0.0", "--port", "8090"]
+    ports:
+      - "8090:8090"
+
+  mcp-promise:
+    build:
+      context: .
+      dockerfile: backend/deploy/bff.Dockerfile
+    command: ["uvicorn", "mcp-servers.promise.main:app", "--host", "0.0.0.0", "--port", "8091"]
+    ports:
+      - "8091:8091"
+
+  mcp-commerce:
+    build:
+      context: .
+      dockerfile: backend/deploy/bff.Dockerfile
+    command: ["uvicorn", "mcp-servers.commerce.main:app", "--host", "0.0.0.0", "--port", "8092"]
+    ports:
+      - "8092:8092"
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - vitrine-bff

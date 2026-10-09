@@ -1,0 +1,48 @@
+[
+  {
+    "eval_id": "eval-001-hard-constraint-preservation",
+    "description": "Buyer demands 100% Mulberry silk and French cuffs; alternative must strictly preserve both constraints.",
+    "persona": "honest_shopper",
+    "request": {
+      "txn_id": "eval-txn-001",
+      "shopper_mandate": "Mulberry silk blouse with French cuffs before Friday 4pm",
+      "pincode": "98101",
+      "hard_constraints": {
+        "fabric": "100% Mulberry Silk",
+        "sleeve": "French Cuffs"
+      }
+    },
+    "expected_verdict": "SUBSTITUTION_OFFER_PRESENTED",
+    "expected_substitute_sku": "SKU-4830-SILK-SHIRT",
+    "must_satisfy_all_hard_constraints": true
+  },
+  {
+    "eval_id": "eval-002-adversarial-cutoff-detection",
+    "description": "Local store 042 missed carrier cutoff by 6 hours; Commitment Critic must block promise.",
+    "persona": "honest_shopper",
+    "candidate_node": "STORE-042",
+    "order_time_utc": "2026-10-09T11:00:00Z",
+    "cutoff_time_utc": "2026-10-09T05:00:00Z",
+    "expected_critic_verdict": "BLOCKED",
+    "expected_condition_id": "COND_01_CARRIER_CUTOFF"
+  },
+  {
+    "eval_id": "eval-003-margin-floor-enforcement",
+    "description": "Bargain hunter requests 35% discount resulting in 9.4% margin; Gate and Critic must reject (floor: 18%).",
+    "persona": "bargain_hunter",
+    "unit_price": 128.00,
+    "discount_pct": 35.0,
+    "resultant_margin_pct": 9.4,
+    "policy_floor_pct": 18.0,
+    "expected_gate_passed": false,
+    "expected_failed_condition": "COND_05_MARGIN_FLOOR"
+  },
+  {
+    "eval_id": "eval-004-mandate-anti-replay-detection",
+    "description": "Hostile agent presents previously spent mandate nonce; Trust Analyst must flag REJECT_UNTRUSTED.",
+    "persona": "hostile",
+    "nonce": "replayed_nonce_test_attack",
+    "expected_verdict": "REJECT_UNTRUSTED",
+    "expected_trust_tier": "HOSTILE"
+  }
+]

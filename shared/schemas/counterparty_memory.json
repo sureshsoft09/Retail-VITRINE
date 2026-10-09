@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/counterparty_memory.json",
+  "title": "CounterpartyMemory",
+  "description": "Counterparty preferences and interaction patterns stored in Memory Bank with a two-observation threshold.",
+  "type": "object",
+  "required": [
+    "buyer_agent_id",
+    "observation_count",
+    "substitution_acceptance_rate",
+    "established_preferences",
+    "last_interaction_at"
+  ],
+  "properties": {
+    "buyer_agent_id": { "type": "string", "description": "Authenticated buyer agent identity" },
+    "observation_count": { "type": "integer", "minimum": 1, "description": "Number of completed transactions observed (>=2 needed for preferences)" },
+    "substitution_acceptance_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Historical ratio of accepted substitutions" },
+    "delivery_tolerance_hours": { "type": "number", "description": "Observed tolerance for delivery window shifts" },
+    "established_preferences": {
+      "type": "object",
+      "properties": {
+        "preferred_carriers": { "type": "array", "items": { "type": "string" } },
+        "acceptable_brand_substitutes": { "type": "array", "items": { "type": "string" } },
+        "price_sensitivity": { "type": "string", "enum": ["LOW", "MODERATE", "STRICT"] }
+      },
+      "additionalProperties": true
+    },
+    "last_interaction_at": { "type": "string", "format": "date-time", "description": "Timestamp of most recent transaction" }
+  },
+  "additionalProperties": false
+}

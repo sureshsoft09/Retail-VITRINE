@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vitrine.retail/schemas/gate_result.json",
+  "title": "GateResult",
+  "description": "Deterministic evaluation of all 11 commercial and fulfilment conditions prior to commitment.",
+  "type": "object",
+  "required": [
+    "evaluation_id",
+    "txn_id",
+    "passed",
+    "requires_human_approval",
+    "conditions",
+    "evaluated_at"
+  ],
+  "properties": {
+    "evaluation_id": { "type": "string", "description": "Unique evaluation UUID" },
+    "txn_id": { "type": "string", "description": "Transaction ID under evaluation" },
+    "passed": { "type": "boolean", "description": "True only if all 11 conditions evaluate to true (or within autonomy threshold)" },
+    "requires_human_approval": { "type": "boolean", "description": "True if an autonomy cap or margin condition breaches auto-commit tier" },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["condition_id", "name", "passed", "observed_value", "threshold_value"],
+        "properties": {
+          "condition_id": { "type": "string", "description": "Unique condition identifier (COND_01 through COND_11)" },
+          "name": { "type": "string", "description": "Human-readable condition title" },
+          "passed": { "type": "boolean", "description": "Condition pass/fail result" },
+          "observed_value": { "type": ["string", "number", "boolean"], "description": "Calculated value" },
+          "threshold_value": { "type": ["string", "number", "boolean"], "description": "Permitted policy threshold" },
+          "evidence_ref": { "type": "string", "description": "Computation hash or data reference" }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 11,
+      "maxItems": 11,
+      "description": "Exactly 11 condition evaluations"
+    },
+    "evaluated_at": { "type": "string", "format": "date-time", "description": "Timestamp of gate run" }
+  },
+  "additionalProperties": false
+}

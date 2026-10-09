@@ -1,0 +1,24 @@
+# agents/passports/ag-agent-trust-analyst.yaml
+agent:
+  id: ag-agent-trust-analyst
+  version: 1.0.0
+  owner_role: Chief Information Security Officer
+  tier: M
+model_pin:
+  primary: gemini-2.0-flash
+  deep_analysis: gemini-1.5-pro
+  region: us-central1
+  prompt_version: trust_analyst.v1
+authority:
+  autonomy_tier: A1
+tool_grants:
+  allowed:
+    - check_mandate_replay
+    - get_request_velocity
+    - get_agent_history
+    - graph_agent_correlation
+  # NO write tools, NO commercial tools (containment by design)
+guardrails:
+  - counter_evidence_mandatory_on_reject
+  - no_bare_scores # Must explain why with factual evidence
+  - containment_by_construction
