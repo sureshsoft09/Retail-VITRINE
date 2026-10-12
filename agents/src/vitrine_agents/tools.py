@@ -191,3 +191,57 @@ def screen_ap2_mandate(buyer_agent_id: str, nonce: str) -> Dict[str, Any]:
         "risk_score": 0.95 if is_hostile else 0.04,
         "counter_evidence": f"Nonce '{nonce}' was already spent in previous transaction block" if is_replayed else None,
     }
+
+def evaluate_full_transaction(
+    sku: str = "SKU-4829-SILK-BLOUSE",
+    dest_pincode: str = "98101",
+    discount_pct: float = 5.0,
+    delivery_by: str = "2026-10-10T16:00:00Z",
+) -> Dict[str, Any]:
+    """Execute the full end-to-end multi-agent commerce transaction pipeline.
+
+    Coordinates:
+    1. Promise Engine: Evaluates ATP inventory across candidate nodes (STORE-042, DC-NORTH).
+    2. Commitment Critic: Zero-trust adversarial audit of carrier cutoffs, safety stock, and margins.
+    3. Substitution Strategist: Recovers alternative products preserving hard constraints if blocked.
+    4. Negotiation Agent: Generates compliant commercial terms and signed UCP offer.
+
+    Args:
+        sku: Product SKU to order (default: SKU-4829-SILK-BLOUSE).
+        dest_pincode: 5-digit delivery zip code (default: 98101).
+        discount_pct: Requested buyer discount percentage (default: 5.0).
+        delivery_by: Target delivery UTC ISO timestamp (default: 2026-10-10T16:00:00Z).
+    """
+    import asyncio
+    import concurrent.futures
+    from vitrine_agents.transaction.agent import VitrineTransactionSupervisor
+
+    supervisor = VitrineTransactionSupervisor()
+    input_data = {
+        "txn_id": f"TXN-{uuid4().hex[:8].upper()}",
+        "buyer_agent_id": "buyer-interactive-user",
+        "action": "DISCOVER",
+        "constraints": {
+            "sku": sku,
+            "pincode": dest_pincode,
+            "discount_pct": discount_pct,
+            "delivery_by": delivery_by,
+            "hard_constraints": {
+                "fabric": "100% Mulberry Silk",
+                "sleeve": "French Cuffs",
+            },
+        },
+    }
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(asyncio.run, supervisor.query(input_data["txn_id"], input_data))
+            return future.result()
+    else:
+        return asyncio.run(supervisor.query(input_data["txn_id"], input_data))
+

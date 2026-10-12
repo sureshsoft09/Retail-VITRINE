@@ -14,14 +14,15 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
-from google.adk.agents import SequentialAgent
+from google.adk.agents import LlmAgent, SequentialAgent
+from vitrine_agents import config, tools
 from vitrine_agents.transaction.promise_engine import promise_agent, PromiseEngineAgent
 from vitrine_agents.transaction.critic import critic_agent, CommitmentCriticAgent
 from vitrine_agents.transaction.substitution import substitution_agent, SubstitutionStrategistAgent
 from vitrine_agents.transaction.negotiation import negotiation_agent, NegotiationAgent
 
-# Root ADK SequentialAgent pipeline coordinating the entire commerce lifecycle
-root_agent = SequentialAgent(
+# Batch sequential pipeline preserved for programmatic evaluations
+pipeline_agent = SequentialAgent(
     name="vitrine_commerce_pipeline",
     description=(
         "Autonomous multi-agent commerce pipeline. Synthesizes fulfillment promises, "
@@ -30,6 +31,48 @@ root_agent = SequentialAgent(
     ),
     sub_agents=[promise_agent, critic_agent, substitution_agent, negotiation_agent],
 )
+
+SUPERVISOR_INSTRUCTION = """
+You are the VITRINE Autonomous Commerce Supervisor (orch-commerce-supervisor).
+You are the primary conversational enterprise coordinator for autonomous commerce across Google Cloud and Vertex AI.
+
+Core multi-agent capabilities you coordinate:
+1. Promise Engine (ag-promise-engine): Real-time ATP inventory synthesis and transit isochrone evaluation.
+2. Commitment Critic (ag-commitment-critic): Zero-trust adversarial audit of carrier cutoffs, safety stock, and margins.
+3. Substitution Strategist (ag-substitution-strategist): Catalog alternative recovery preserving 100% of buyer hard constraints.
+4. Negotiation Agent (ag-negotiation-agent): UCP commercial terms calculation, discount caps, and signed offers.
+5. Trust Analyst (ag-agent-trust-analyst): AP2 mandate cryptographic verification and nonce anti-replay detection.
+
+Interaction guidelines:
+- If the user sends a greeting (e.g. "Hello", "Hi"):
+  Warmly greet them, introduce yourself as the VITRINE Commerce Supervisor, and suggest 3 quick actions they can test:
+  * "Evaluate full transaction for SKU-4829-SILK-BLOUSE to pincode 98101"
+  * "Check inventory for SKU-4829-SILK-BLOUSE at STORE-042"
+  * "Find substitutes for SKU-4829-SILK-BLOUSE with 100% Mulberry Silk and French Cuffs"
+- If the user asks to evaluate fulfillment, test an order, or run a full transaction:
+  You must hand off and route the request to your sub-agent `vitrine_commerce_pipeline` using `transfer_to_agent`.
+  The transfer_reason should state that the transaction requires the sequential multi-agent pipeline (Promise Engine -> Commitment Critic -> Substitution Strategist -> Negotiation Agent).
+- If asked about individual capabilities (e.g. check inventory at a node, evaluate transit to a pincode, find substitutes for a blocked item, calculate commercial margins, or screen an AP2 mandate):
+  Invoke the corresponding specialized tool directly and explain the technical and operational result clearly.
+"""
+
+commerce_supervisor = LlmAgent(
+    name="commerce_supervisor",
+    model=config.MODEL_REASONING,
+    description="Conversational VITRINE Commerce Supervisor coordinating multi-agent transactions.",
+    instruction=SUPERVISOR_INSTRUCTION,
+    sub_agents=[pipeline_agent],
+    tools=[
+        tools.get_node_inventory,
+        tools.evaluate_transit_window,
+        tools.find_substitute_candidates,
+        tools.calculate_commercial_margin,
+        tools.screen_ap2_mandate,
+    ],
+)
+
+# root_agent is discovered by ADK Web Server as the interactive chat assistant
+root_agent = commerce_supervisor
 
 class TransactionTurnInput(BaseModel):
     txn_id: str

@@ -14,7 +14,7 @@ class FirestoreService:
 
     def __init__(self, project_id: Optional[str] = None):
         self.project_id = project_id or os.getenv("GCP_PROJECT_ID", "vitrine-demo")
-        self.database = os.getenv("FIRESTORE_DATABASE", "(default)")
+        self.database = os.getenv("FIRESTORE_DATABASE", "vitrine-db")
         self._in_memory_events: Dict[str, List[Dict[str, Any]]] = {}
         self._client = None
 

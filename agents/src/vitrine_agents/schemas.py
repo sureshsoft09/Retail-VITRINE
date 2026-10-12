@@ -18,7 +18,7 @@ class CandidatePromiseFinding(BaseModel):
     transit_hours: float = Field(ge=0.0, description="Estimated transit time in decimal hours.")
     carrier: str = Field(description="Selected carrier (e.g. FedEx Standard, OnTrac SameDay).")
     carrier_cutoff: str = Field(description="ISO 8601 UTC timestamp of carrier dispatch cutoff window.")
-    unit_price: float = Field(gt=0.0, description="Base unit price for product.")
+    unit_price: float = Field(ge=0.0, description="Base unit price for product in USD.")
     shipping_cost: float = Field(ge=0.0, description="Shipping cost in USD.")
     margin_pct: float = Field(description="Gross profit margin percentage after landed costs.")
     guaranteed_delivery_utc: str = Field(description="Guaranteed SLA delivery window in ISO 8601 UTC.")

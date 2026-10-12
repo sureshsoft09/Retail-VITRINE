@@ -5,7 +5,7 @@ agent:
   owner_role: VP Supply Chain & Fulfillment
   tier: M
 model_pin:
-  primary: gemini-1.5-pro
+  primary: gemini-2.5-flash
   region: us-central1
   prompt_version: promise.v1
 authority:

@@ -2,19 +2,27 @@
 
 Standardized Region: us-central1
 Port: 8090
-Exposes catalogue search, multimodal attribute provenance, SKU detail,
-and substitution graph traversal over MCP/HTTP to agents authorized by Agent Gateway.
+Built with FastMCP exposing Model Context Protocol over streamable-http at /mcp.
 """
 
+import asyncio
+import os
 from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Header, status
 from pydantic import BaseModel
+from dotenv import load_dotenv
+from fastmcp import FastMCP
+from fastapi import HTTPException
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
-app = FastAPI(
-    title="mcp-catalog",
-    version="1.0.0",
-    description="VITRINE MCP Catalogue Service"
-)
+# Load environment variables
+load_dotenv()
+
+# ------------------------------------------------------------------------------
+# Initialize FastMCP Server
+# ------------------------------------------------------------------------------
+
+mcp = FastMCP("vitrine-catalog")
 
 # ------------------------------------------------------------------------------
 # Request / Response Schemas
@@ -101,38 +109,69 @@ CATALOGUE_STORE: Dict[str, Dict[str, Any]] = {
 }
 
 # ------------------------------------------------------------------------------
-# Ingress Policy & Health
+# Health & Status Helpers
 # ------------------------------------------------------------------------------
 
-@app.get("/healthz")
-def healthz():
+def healthz() -> Dict[str, Any]:
     return {"status": "ok", "server": "mcp-catalog", "region": "us-central1"}
 
+def root_info() -> Dict[str, Any]:
+    return {
+        "service": "mcp-catalog",
+        "framework": "FastMCP",
+        "status": "ONLINE",
+        "description": "VITRINE MCP Catalogue Service",
+        "mcp_endpoint": "/mcp",
+        "tools": [
+            "catalog_search",
+            "get_sku",
+            "get_substitutes",
+            "update_attributes",
+        ],
+    }
+
+@mcp.custom_route("/healthz", methods=["GET"])
+async def healthz_route(request: Request) -> Response:
+    return JSONResponse(healthz())
+
+@mcp.custom_route("/", methods=["GET"])
+async def root_route(request: Request) -> Response:
+    return JSONResponse(root_info())
+
 # ------------------------------------------------------------------------------
-# MCP Tool Endpoints
+# MCP Tools
 # ------------------------------------------------------------------------------
 
-@app.post("/tools/catalog.search")
+@mcp.tool()
 def catalog_search(
-    req: SearchRequest,
-    x_agent_id: Optional[str] = Header(None),
-):
+    query: Optional[str] = None,
+    mode: str = "enriched",
+    min_confidence: float = 0.7,
+    required_attributes: Optional[Dict[str, str]] = None,
+    x_agent_id: Optional[str] = None,
+    req: Optional[SearchRequest] = None,
+) -> Dict[str, Any]:
     """MCP Tool: Searches catalogue matching structured and multimodal attributes."""
-    q = req.query.lower()
-    matches = []
+    if isinstance(query, SearchRequest):
+        req = query
+    if req is not None:
+        q_str = req.query.lower()
+        search_mode = req.mode
+    else:
+        q_str = (query or "").lower()
+        search_mode = mode
 
+    matches = []
     for sku, product in CATALOGUE_STORE.items():
-        if req.mode == "raw":
-            # Match strictly against title or raw attributes (fails specific specs)
-            if q in product["title"].lower() or any(
-                q in str(v).lower() for v in product["raw_attributes"].values() if v != "— not captured"
+        if search_mode == "raw":
+            if q_str in product["title"].lower() or any(
+                q_str in str(v).lower() for v in product["raw_attributes"].values() if v != "— not captured"
             ):
                 matches.append(product)
         else:
-            # Enriched mode: matches title OR extracted multimodal attributes
-            title_match = q in product["title"].lower()
+            title_match = q_str in product["title"].lower()
             attr_match = any(
-                q in attr["value"].lower() for attr in product["enriched_attributes"].values()
+                q_str in attr["value"].lower() for attr in product["enriched_attributes"].values()
             )
             if title_match or attr_match:
                 matches.append(product)
@@ -141,68 +180,94 @@ def catalog_search(
         "status": "SUCCESS",
         "count": len(matches),
         "results": matches,
-        "mode_used": req.mode,
+        "mode_used": search_mode,
     }
 
-@app.post("/tools/catalog.get_sku")
+@mcp.tool()
 def get_sku(
-    req: GetSkuRequest,
-    x_agent_id: Optional[str] = Header(None),
-):
+    sku: Optional[str] = None,
+    x_agent_id: Optional[str] = None,
+    req: Optional[GetSkuRequest] = None,
+) -> Dict[str, Any]:
     """MCP Tool: Fetches complete SKU detail with multimodal provenance."""
-    product = CATALOGUE_STORE.get(req.sku)
+    if isinstance(sku, GetSkuRequest):
+        req = sku
+    target_sku = req.sku if req is not None else sku
+
+    product = CATALOGUE_STORE.get(target_sku or "")
     if not product:
-        raise HTTPException(status_code=404, detail=f"SKU '{req.sku}' not found in catalogue.")
+        raise HTTPException(status_code=404, detail=f"SKU '{target_sku}' not found in catalogue.")
     return {
         "status": "SUCCESS",
         "sku_data": product,
     }
 
-@app.post("/tools/catalog.get_substitutes")
+@mcp.tool()
 def get_substitutes(
-    req: SubstitutesRequest,
-    x_agent_id: Optional[str] = Header(None),
-):
+    sku: Optional[str] = None,
+    target_attributes: Optional[Dict[str, str]] = None,
+    x_agent_id: Optional[str] = None,
+    req: Optional[SubstitutesRequest] = None,
+) -> Dict[str, Any]:
     """MCP Tool: Traverses substitution graph to locate compliant replacement SKUs."""
-    product = CATALOGUE_STORE.get(req.sku)
+    if isinstance(sku, SubstitutesRequest):
+        req = sku
+    target_sku = req.sku if req is not None else sku
+
+    product = CATALOGUE_STORE.get(target_sku or "")
     if not product:
-        raise HTTPException(status_code=404, detail=f"SKU '{req.sku}' not found.")
+        raise HTTPException(status_code=404, detail=f"SKU '{target_sku}' not found.")
 
     sub_skus = product.get("substitutes", [])
     substitutes = [CATALOGUE_STORE[s] for s in sub_skus if s in CATALOGUE_STORE]
 
     return {
         "status": "SUCCESS",
-        "original_sku": req.sku,
+        "original_sku": target_sku,
         "substitute_count": len(substitutes),
         "substitutes": substitutes,
     }
 
-@app.post("/tools/catalog.update_attributes")
+@mcp.tool()
 def update_attributes(
-    req: UpdateAttributesRequest,
-    x_agent_id: Optional[str] = Header(None),
-):
+    sku: Optional[str] = None,
+    attributes: Optional[Dict[str, Any]] = None,
+    x_agent_id: Optional[str] = None,
+    req: Optional[UpdateAttributesRequest] = None,
+) -> Dict[str, Any]:
     """MCP Tool: Ingests multimodal extracted attributes (restricted to enrichment agent)."""
-    # Authorization boundary check: only enrichment agents or admin may write attributes
+    if isinstance(sku, UpdateAttributesRequest):
+        req = sku
+    target_sku = req.sku if req is not None else sku
+    target_attrs = req.attributes if req is not None else (attributes or {})
+
+    # Authorization boundary check: Trust Analyst cannot write catalog attributes
     agent_str = x_agent_id if isinstance(x_agent_id, str) else None
     if agent_str and "trust" in agent_str.lower():
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=403,
             detail="Access Denied: Trust Analyst has zero catalog write permissions.",
         )
 
-    product = CATALOGUE_STORE.get(req.sku)
+    product = CATALOGUE_STORE.get(target_sku or "")
     if not product:
-        raise HTTPException(status_code=404, detail=f"SKU '{req.sku}' not found.")
+        raise HTTPException(status_code=404, detail=f"SKU '{target_sku}' not found.")
 
-    product["enriched_attributes"].update(req.attributes)
+    product["enriched_attributes"].update(target_attrs)
     return {
         "status": "UPDATED",
-        "sku": req.sku,
+        "sku": target_sku,
         "attribute_count": len(product["enriched_attributes"]),
     }
 
+# ------------------------------------------------------------------------------
+# Entrypoint
+# ------------------------------------------------------------------------------
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8090)
+    port = int(os.getenv("PORT", 8090))
+    mcp.run(
+        transport="streamable-http",
+        host="0.0.0.0",
+        port=port,
+    )

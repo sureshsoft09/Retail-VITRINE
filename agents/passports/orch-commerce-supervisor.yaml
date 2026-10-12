@@ -5,7 +5,7 @@ agent:
   owner_role: Chief Commercial Officer
   tier: M
 model_pin:
-  primary: gemini-1.5-pro
+  primary: gemini-2.5-pro
   region: us-central1
   prompt_version: supervisor.v1
 authority:
