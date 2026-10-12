@@ -1,0 +1,13 @@
+.gcloudignore
+.git
+.gitignore
+.venv/
+venv/
+node_modules/
+frontend/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log

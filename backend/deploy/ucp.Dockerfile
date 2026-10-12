@@ -4,7 +4,8 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8082
+    PORT=8082 \
+    PYTHONPATH=/app:/app/agents/src:/app/agents/cloud_run_host
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -12,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
-RUN pip install --no-cache-dir fastapi uvicorn pydantic google-cloud-bigquery google-cloud-firestore httpx pyyaml
+RUN pip install --no-cache-dir fastapi uvicorn pydantic google-cloud-bigquery google-cloud-firestore httpx pyyaml python-dotenv google-adk google-cloud-aiplatform mcp
 
 COPY backend /app/backend
 COPY agents /app/agents

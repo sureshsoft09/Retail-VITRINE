@@ -26,7 +26,7 @@ from backend.app.core.calculators.transit import evaluate_transit_feasibility
 from backend.app.core.calculators.margin import calculate_margin
 from backend.app.gcp.bq import bq_client
 from backend.app.gcp.firestore import firestore_service
-from vitrine_agents.transaction.agent import root_agent
+from vitrine_agents.transaction.agent import VitrineTransactionSupervisor
 from app.trust_analyst import AgentTrustAnalyst
 
 app = FastAPI(
@@ -44,6 +44,23 @@ app.add_middleware(
 )
 
 trust_analyst = AgentTrustAnalyst()
+supervisor = VitrineTransactionSupervisor()
+
+# Vertex AI Reasoning Engine remote client
+_remote_engine = None
+
+def get_remote_reasoning_engine():
+    """Lazily initializes the connection to the deployed Vertex AI Agent Engine."""
+    global _remote_engine
+    if _remote_engine is None and settings.AGENT_ENGINE_RESOURCE_NAME:
+        try:
+            import vertexai
+            from vertexai.preview import reasoning_engines
+            vertexai.init(project=settings.GCP_PROJECT_ID, location=settings.GCP_REGION)
+            _remote_engine = reasoning_engines.ReasoningEngine(settings.AGENT_ENGINE_RESOURCE_NAME)
+        except Exception:
+            _remote_engine = False  # Mark as unavailable
+    return _remote_engine if _remote_engine is not False else None
 
 # ------------------------------------------------------------------------------
 # Request & Response Models
@@ -76,6 +93,8 @@ class GateEvaluateRequest(BaseModel):
 # ------------------------------------------------------------------------------
 
 @app.get("/healthz")
+@app.get("/health")
+@app.get("/")
 def healthz():
     return {"status": "ok", "service": "vitrine-bff", "region": settings.GCP_REGION}
 
@@ -99,7 +118,7 @@ def bootstrap_session():
 # ------------------------------------------------------------------------------
 
 @app.get("/api/catalogue/search")
-def search_catalogue(q: str = Query(..., description="Query terms"), mode: str = Query("enriched", regex="^(raw|enriched)$")):
+def search_catalogue(q: str = Query(..., description="Query terms"), mode: str = Query("enriched", pattern="^(raw|enriched)$")):
     """Product Brain search with raw vs. enriched switch.
     
     Demonstrates before/after: raw fails to match fine-grained attributes;
@@ -155,17 +174,27 @@ async def start_transaction(req: StartTransactionRequest):
             "message": "Transaction blocked by Agent Trust Analyst security screen.",
         }
 
-    # Execute turn with supervisor agent
-    result = await root_agent.query(
-        session_id=req.txn_id,
-        input={
-            "txn_id": req.txn_id,
-            "buyer_agent_id": req.buyer_agent_id,
-            "action": "DISCOVER",
-            "constraints": req.constraints,
-            "ap2_mandate": req.ap2_mandate,
-        }
-    )
+    # Execute turn with Vertex AI Reasoning Engine (or local supervisor fallback)
+    payload = {
+        "txn_id": req.txn_id,
+        "buyer_agent_id": req.buyer_agent_id,
+        "action": "DISCOVER",
+        "constraints": req.constraints,
+        "ap2_mandate": req.ap2_mandate,
+    }
+
+    remote_engine = get_remote_reasoning_engine()
+    if remote_engine:
+        try:
+            result = remote_engine.query(
+                session_id=req.txn_id,
+                input=payload,
+            )
+        except Exception:
+            # Fallback to local in-process supervisor
+            result = await supervisor.query(session_id=req.txn_id, input=payload)
+    else:
+        result = await supervisor.query(session_id=req.txn_id, input=payload)
 
     # Persist live steps for the Transaction Theatre
     for step in result.get("step_events", []):
@@ -176,12 +205,12 @@ async def start_transaction(req: StartTransactionRequest):
         offer = result["active_offer"]
         bq_client.append_commitment({
             "txn_id": req.txn_id,
-            "sku": offer["sku"],
-            "quantity": offer["quantity"],
-            "unit_price": offer["unit_price"],
+            "sku": offer.get("sku", "UNKNOWN_SKU"),
+            "quantity": int(offer.get("quantity", offer.get("qty", 1))),
+            "unit_price": float(offer.get("unit_price", offer.get("price", 0.0))),
             "currency": offer.get("currency", "USD"),
-            "fulfilment_node_id": offer.get("delivery_promise", {}).get("fulfilment_node_id", "DC-NORTH"),
-            "carrier_id": offer.get("delivery_promise", {}).get("carrier_id", "FedEx-Express"),
+            "fulfilment_node_id": offer.get("delivery_promise", {}).get("fulfilment_node_id", "DC-NORTH") if isinstance(offer.get("delivery_promise"), dict) else "DC-NORTH",
+            "carrier_id": offer.get("delivery_promise", {}).get("carrier_id", "FedEx-Express") if isinstance(offer.get("delivery_promise"), dict) else "FedEx-Express",
             "mandate_id": (req.ap2_mandate or {}).get("mandate_id", "mandate-auto"),
             "buyer_agent_id": req.buyer_agent_id,
         })

@@ -22,7 +22,7 @@ if _cr_host_path not in sys.path:
 
 from backend.app.core.config import settings
 from backend.app.gcp.bq import bq_client
-from vitrine_agents.transaction.agent import root_agent
+from vitrine_agents.transaction.agent import VitrineTransactionSupervisor
 from app.trust_analyst import AgentTrustAnalyst
 
 app = FastAPI(
@@ -32,6 +32,7 @@ app = FastAPI(
 )
 
 trust_analyst = AgentTrustAnalyst()
+supervisor = VitrineTransactionSupervisor()
 
 class UCPDiscoverRequest(BaseModel):
     query: str
@@ -107,7 +108,7 @@ async def ucp_negotiate(req: UCPNegotiateRequest):
         )
 
     # Process turn with supervisor agent
-    result = await root_agent.query(
+    result = await supervisor.query(
         session_id=req.txn_id,
         input={
             "txn_id": req.txn_id,

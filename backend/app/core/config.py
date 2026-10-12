@@ -3,34 +3,37 @@
 Standardized Region: us-central1
 """
 
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
+_backend_dir = Path(__file__).resolve().parent.parent.parent
+_env_file = _backend_dir / ".env"
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=str(_env_file) if _env_file.exists() else ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # GCP Core
-    GCP_PROJECT_ID: str = "vitrine-demo"
+    GCP_PROJECT_ID: str = "gcp-aibuildercup-project"
     GCP_REGION: str = "us-central1"
-    STAGING_BUCKET: str = "gs://vitrine-staging-bucket"
+    STAGING_BUCKET: str = "gs://vitrine-staging-agents"
 
     # Services
     BFF_URL: str = "http://localhost:8080"
     CORE_API_URL: str = "http://localhost:8081"
     UCP_URL: str = "http://localhost:8082"
-    AGENTS_HOST_URL: str = "http://localhost:8083"
+    AGENTS_HOST_URL: str = "https://vitrine-agents-host-285078287322.us-central1.run.app"
 
-    # MCP Tool Servers
-    MCP_CATALOG_URL: str = "http://localhost:8090"
-    MCP_PROMISE_URL: str = "http://localhost:8091"
-    MCP_COMMERCE_URL: str = "http://localhost:8092"
-
-    # Vertex AI Agent Engine
-    AGENT_ENGINE_RESOURCE_NAME: str = "projects/vitrine-demo/locations/us-central1/reasoningEngines/vitrine-transaction"
+    # Vertex AI Agent Engine Deployed Resource
+    AGENT_ENGINE_RESOURCE_NAME: str = "projects/285078287322/locations/us-central1/reasoningEngines/4500934686062673920"
 
     # BigQuery & Firestore
-    BQ_DATASET_CATALOG: str = "vitrine_catalog"
-    BQ_DATASET_LEDGER: str = "vitrine_ledger"
+    BQ_DATASET_CATALOG: str = "vitrine_dataset"
+    BQ_DATASET_LEDGER: str = "vitrine_dataset"
     BQ_CONNECTION_ID: str = "us-central1.gemini_conn"
     FIRESTORE_DATABASE: str = "(default)"
 
