@@ -9,14 +9,21 @@ Provides machine-to-machine protocol interfaces for external buyer agents:
   - /ucp/offer/{id}/accept (Mandate verification and commitment)
 """
 
+import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 
+# Ensure cloud_run_host is on sys.path
+_cr_host_path = str(Path(__file__).resolve().parent.parent.parent.parent / "agents" / "cloud_run_host")
+if _cr_host_path not in sys.path:
+    sys.path.insert(0, _cr_host_path)
+
 from backend.app.core.config import settings
 from backend.app.gcp.bq import bq_client
 from vitrine_agents.transaction.agent import root_agent
-from vitrine_agents.trust.analyst import AgentTrustAnalyst
+from app.trust_analyst import AgentTrustAnalyst
 
 app = FastAPI(
     title="vitrine-ucp",

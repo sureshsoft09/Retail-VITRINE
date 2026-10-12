@@ -5,12 +5,18 @@ and buyer trust screening.
 """
 
 import pytest
+from pathlib import Path
+import sys
+
+# Ensure cloud_run_host is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agents" / "cloud_run_host"))
+
 from vitrine_agents.transaction.promise_engine import PromiseEngineAgent
 from vitrine_agents.transaction.critic import CommitmentCriticAgent
 from vitrine_agents.transaction.substitution import SubstitutionStrategistAgent
 from vitrine_agents.transaction.negotiation import NegotiationAgent
 from vitrine_agents.transaction.agent import VitrineTransactionSupervisor
-from vitrine_agents.trust.analyst import AgentTrustAnalyst
+from app.trust_analyst import AgentTrustAnalyst
 from buyer_agent.buyer import DemoBuyerAgent
 
 def test_promise_engine_candidates():

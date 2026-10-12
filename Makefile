@@ -54,11 +54,11 @@ deploy-ae:
 deploy-host:
 	@echo "Deploying vitrine-agents-host to Cloud Run in $(REGION)..."
 	gcloud run deploy vitrine-agents-host \
-		--source=agents \
-		--dockerfile=agents/host/Dockerfile \
+		--source=agents/cloud_run_host \
 		--region=$(REGION) \
-		--no-allow-unauthenticated \
-		--timeout=3600
+		--allow-unauthenticated \
+		--timeout=600
+
 
 deploy-all: deploy-ae deploy-host
 	@echo "Deploying BFF, Core API, UCP endpoint, and MCP servers to Cloud Run..."

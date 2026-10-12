@@ -9,11 +9,12 @@ import sys
 import unittest
 from pathlib import Path
 
-# Add Src, Src/agents/src, and Src/agents to sys.path
+# Add Src, Src/agents/src, Src/agents, and Src/agents/cloud_run_host to sys.path
 root_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root_dir))
 sys.path.insert(0, str(root_dir / "agents" / "src"))
 sys.path.insert(0, str(root_dir / "agents"))
+sys.path.insert(0, str(root_dir / "agents" / "cloud_run_host"))
 
 from backend.app.core.calculators.atp import calculate_atp
 from backend.app.core.calculators.transit import evaluate_transit_feasibility
@@ -24,7 +25,7 @@ from vitrine_agents.transaction.promise_engine import PromiseEngineAgent
 from vitrine_agents.transaction.critic import CommitmentCriticAgent
 from vitrine_agents.transaction.substitution import SubstitutionStrategistAgent
 from vitrine_agents.transaction.agent import VitrineTransactionSupervisor
-from vitrine_agents.trust.analyst import AgentTrustAnalyst
+from app.trust_analyst import AgentTrustAnalyst
 from buyer_agent.buyer import DemoBuyerAgent
 
 class TestCalculators(unittest.TestCase):

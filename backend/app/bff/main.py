@@ -10,6 +10,14 @@ from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import sys
+from pathlib import Path
+
+# Ensure cloud_run_host is on sys.path
+_cr_host_path = str(Path(__file__).resolve().parent.parent.parent.parent / "agents" / "cloud_run_host")
+if _cr_host_path not in sys.path:
+    sys.path.insert(0, _cr_host_path)
+
 from backend.app.core.config import settings
 from backend.app.core.services.gate import CommitmentGate
 from backend.app.core.services.autonomy import autonomy_manager
@@ -19,7 +27,7 @@ from backend.app.core.calculators.margin import calculate_margin
 from backend.app.gcp.bq import bq_client
 from backend.app.gcp.firestore import firestore_service
 from vitrine_agents.transaction.agent import root_agent
-from vitrine_agents.trust.analyst import AgentTrustAnalyst
+from app.trust_analyst import AgentTrustAnalyst
 
 app = FastAPI(
     title="vitrine-bff",

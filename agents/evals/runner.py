@@ -24,11 +24,12 @@ root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 sys.path.insert(0, str(root_dir / "agents" / "src"))
 sys.path.insert(0, str(root_dir / "agents"))
+sys.path.insert(0, str(root_dir / "agents" / "cloud_run_host"))
 
 from vitrine_agents.transaction.critic import CommitmentCriticAgent
 from vitrine_agents.transaction.substitution import SubstitutionStrategistAgent
 from vitrine_agents.transaction.agent import VitrineTransactionSupervisor
-from vitrine_agents.trust.analyst import AgentTrustAnalyst
+from app.trust_analyst import AgentTrustAnalyst
 from backend.app.core.services.gate import CommitmentGate
 from backend.app.core.calculators.margin import calculate_margin
 from backend.app.core.calculators.atp import calculate_atp
