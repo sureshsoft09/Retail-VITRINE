@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from google.adk.agents import LlmAgent, SequentialAgent
 from vitrine_agents import config, tools
+from vitrine_agents.mcp_tools import CatalogMCP_Tool
 from vitrine_agents.schemas import SubstitutionFinding
 from vitrine_agents.base import load_passport, load_prompt
 
@@ -19,7 +20,7 @@ SUBSTITUTION_INVESTIGATE_PROMPT = """
 You are the Substitution Strategist Agent.
 When the Commitment Critic blocks a promise, your job is to find a substitute item from available network inventory.
 Rules:
-1. Call find_substitute_candidates with the blocked SKU and the buyer's hard constraints.
+1. Call get_substitutes or catalog_search with the blocked SKU and the buyer's hard constraints.
 2. Hard constraints (e.g., fabric="100% Mulberry Silk", sleeve="French Cuffs") are NON-NEGOTIABLE.
 3. Soft attributes (e.g. collar style, color shade) may be relaxed if necessary.
 4. Prepare an evidence brief explaining the replacement SKU, preserved constraints, and customer rationale.
@@ -37,7 +38,7 @@ substitution_investigate = LlmAgent(
     model=config.MODEL_REASONING,
     description="Searches catalog inventory for alternatives preserving buyer hard constraints.",
     instruction=SUBSTITUTION_INVESTIGATE_PROMPT,
-    tools=[tools.find_substitute_candidates],
+    tools=[CatalogMCP_Tool],
     output_key="substitution_evidence",
 )
 

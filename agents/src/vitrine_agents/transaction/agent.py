@@ -11,11 +11,19 @@ Deployed to Vertex AI Agent Engine in us-central1 (session_id = txn_id).
 """
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
+# Ensure transaction-specific environment is loaded with highest priority
+_env_path = Path(__file__).resolve().parent / ".env"
+if _env_path.exists():
+    load_dotenv(dotenv_path=_env_path, override=True)
+
 from google.adk.agents import LlmAgent, SequentialAgent
-from vitrine_agents import config, tools
+from vitrine_agents import config
+from vitrine_agents.mcp_tools import CatalogMCP_Tool, PromiseMCP_Tool, CommerceMCP_Tool
 from vitrine_agents.transaction.promise_engine import promise_agent, PromiseEngineAgent
 from vitrine_agents.transaction.critic import critic_agent, CommitmentCriticAgent
 from vitrine_agents.transaction.substitution import substitution_agent, SubstitutionStrategistAgent
@@ -32,16 +40,24 @@ pipeline_agent = SequentialAgent(
     sub_agents=[promise_agent, critic_agent, substitution_agent, negotiation_agent],
 )
 
+from google.adk.tools import AgentTool
+
+# Specialized ADK AgentTools wrapping each domain sub-agent (Pattern 1)
+promise_tool = AgentTool(agent=promise_agent)
+critic_tool = AgentTool(agent=critic_agent)
+substitution_tool = AgentTool(agent=substitution_agent)
+negotiation_tool = AgentTool(agent=negotiation_agent)
+
 SUPERVISOR_INSTRUCTION = """
 You are the VITRINE Autonomous Commerce Supervisor (orch-commerce-supervisor).
 You are the primary conversational enterprise coordinator for autonomous commerce across Google Cloud and Vertex AI.
 
 Core multi-agent capabilities you coordinate:
-1. Promise Engine (ag-promise-engine): Real-time ATP inventory synthesis and transit isochrone evaluation.
-2. Commitment Critic (ag-commitment-critic): Zero-trust adversarial audit of carrier cutoffs, safety stock, and margins.
-3. Substitution Strategist (ag-substitution-strategist): Catalog alternative recovery preserving 100% of buyer hard constraints.
-4. Negotiation Agent (ag-negotiation-agent): UCP commercial terms calculation, discount caps, and signed offers.
-5. Trust Analyst (ag-agent-trust-analyst): AP2 mandate cryptographic verification and nonce anti-replay detection.
+1. Promise Engine (`promise_agent` tool): Real-time ATP inventory synthesis, candidate fulfillment nodes, carrier cutoffs, and transit isochrones.
+2. Commitment Critic (`critic_agent` tool): Zero-trust adversarial audit of carrier cutoffs, safety stock, and margin floors.
+3. Substitution Strategist (`substitution_agent` tool): Catalog alternative recovery preserving 100% of buyer hard constraints.
+4. Negotiation Agent (`negotiation_agent` tool): UCP commercial terms calculation, discount caps, and signed offers.
+5. Trust Analyst: AP2 mandate cryptographic verification and nonce anti-replay detection.
 
 Interaction guidelines:
 - If the user sends a greeting (e.g. "Hello", "Hi"):
@@ -49,11 +65,24 @@ Interaction guidelines:
   * "Evaluate full transaction for SKU-4829-SILK-BLOUSE to pincode 98101"
   * "Check inventory for SKU-4829-SILK-BLOUSE at STORE-042"
   * "Find substitutes for SKU-4829-SILK-BLOUSE with 100% Mulberry Silk and French Cuffs"
-- If the user asks to evaluate fulfillment, test an order, or run a full transaction:
-  You must hand off and route the request to your sub-agent `vitrine_commerce_pipeline` using `transfer_to_agent`.
-  The transfer_reason should state that the transaction requires the sequential multi-agent pipeline (Promise Engine -> Commitment Critic -> Substitution Strategist -> Negotiation Agent).
-- If asked about individual capabilities (e.g. check inventory at a node, evaluate transit to a pincode, find substitutes for a blocked item, calculate commercial margins, or screen an AP2 mandate):
-  Invoke the corresponding specialized tool directly and explain the technical and operational result clearly.
+
+- If the user asks to evaluate fulfillment, test an order, or run a full transaction (e.g. "Evaluate full transaction for SKU-4829-SILK-BLOUSE to pincode 98101"):
+  Coordinate the multi-agent transaction evaluation using your specialized sub-agent tools:
+  1. Call `promise_agent` tool with the SKU and destination pincode to evaluate candidate fulfillment options, available ATP, and cutoff windows.
+  2. Call `critic_agent` tool with the candidate promise details to audit whether carrier cutoffs were missed, check ATP safety buffers, and verify profit margins.
+  3. If the critic verdict is BLOCKED, call `substitution_agent` tool to find compliant alternatives preserving 100% buyer hard constraints (e.g. 100% Mulberry Silk, French Cuffs).
+  4. Call `negotiation_agent` tool with the product and pricing details to calculate commercial terms with compliant discount (<= 15%) ensuring margin floor (>= 18%) is satisfied.
+  5. Synthesize a clean, professional executive summary of the entire multi-agent transaction evaluation:
+     * Candidate Promise: Node, carrier, cutoff time, estimated transit, ATP units.
+     * Commitment Critic Verdict: APPROVED or BLOCKED with specific discrepancy breakdown (cutoff breach, margin floor, ATP verification).
+     * Substitution Resolution: Recommended substitute SKU, title, price, and matching attributes.
+     * Final Commercial Offer: Original price, negotiated discount, final price, realized margin %, and UCP Offer ID.
+
+- If asked about individual capabilities:
+  * Check inventory / fulfillment / ATP / cutoffs: Delegate to `promise_agent` tool.
+  * Audit fulfillment safety or carrier cutoffs: Delegate to `critic_agent` tool.
+  * Find substitutes / product attributes / catalogue search: Delegate to `substitution_agent` tool.
+  * Margin calculations, pricing, or commercial negotiation: Delegate to `negotiation_agent` tool.
 """
 
 commerce_supervisor = LlmAgent(
@@ -61,13 +90,11 @@ commerce_supervisor = LlmAgent(
     model=config.MODEL_REASONING,
     description="Conversational VITRINE Commerce Supervisor coordinating multi-agent transactions.",
     instruction=SUPERVISOR_INSTRUCTION,
-    sub_agents=[pipeline_agent],
     tools=[
-        tools.get_node_inventory,
-        tools.evaluate_transit_window,
-        tools.find_substitute_candidates,
-        tools.calculate_commercial_margin,
-        tools.screen_ap2_mandate,
+        promise_tool,
+        critic_tool,
+        substitution_tool,
+        negotiation_tool,
     ],
 )
 

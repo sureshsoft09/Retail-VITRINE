@@ -7,30 +7,78 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from google.adk.agents import LlmAgent
+from google.adk.agents import LlmAgent, SequentialAgent
 from vitrine_agents import config, tools
+from vitrine_agents.mcp_tools import CommerceMCP_Tool
 from vitrine_agents.schemas import NegotiationOfferFinding
 from vitrine_agents.base import load_passport, load_prompt
 
-NEGOTIATION_PROMPT = """
+NEGOTIATION_INVESTIGATE_PROMPT = """
 You are the Vitrine Negotiation Agent.
 Your job is to format commercial offers for buyer agents in the Universal Commerce Protocol (UCP).
+Check the candidate SKU (or substitute SKU if substitution was recommended) and its pricing.
 Rules:
-1. Apply the buyer's requested discount subject to the merchant autonomy cap (maximum 15%).
-2. Call calculate_commercial_margin to verify that the realized margin remains at or above 18%.
-3. Populate the typed NegotiationOfferFinding with the final pricing, discount, and projected margin.
+1. Pricing & Wholesale Cost:
+   - For SKU-4829-SILK-BLOUSE: retail price is $128.00, wholesale cost_of_goods (landed_cost) is $60.00.
+   - For SKU-4830-SILK-SHIRT: retail price is $135.00, wholesale cost_of_goods (landed_cost) is $65.00.
+   - For any other SKU: wholesale cost_of_goods (landed_cost) is 45-50% of retail price. Do NOT use retail price as landed_cost!
+2. Apply the buyer's requested discount subject to the merchant autonomy cap (maximum 15%). If no discount is requested, apply 5%.
+   - Discounted unit price = base_price * (1 - discount_pct / 100).
+3. Call compute_margin with:
+   - price = discounted unit price
+   - landed_cost = wholesale cost_of_goods (e.g. $65.00 for SKU-4830-SILK-SHIRT)
+   - fulfilment_cost = 8.00
+   - shipping_cost = 8.50
+   - policy_floor_pct = 18.0
+4. Check the realized margin:
+   - If realized margin >= 18%, set status to "OFFER_PRESENTED".
+   - Only if realized margin < 18%, set status to "REJECTED_OUT_OF_BOUNDS".
+5. Produce a commercial negotiation brief summarizing:
+   - Target SKU
+   - Base unit price
+   - Applied discount % (capped at 15%)
+   - Discounted unit price
+   - Shipping cost ($8.50)
+   - Total price (discounted unit price + shipping)
+   - Net realized margin % (e.g. ~36%)
+   - Offer status (OFFER_PRESENTED)
 """
 
-negotiation_agent = LlmAgent(
-    name="negotiation_agent",
+NEGOTIATION_CONCLUDE_PROMPT = """
+You are converting the commercial negotiation brief into a typed NegotiationOfferFinding.
+Populate every field in NegotiationOfferFinding:
+- offer_id: A unique offer ID string (e.g. "off-" + 10 random hex chars)
+- sku: Product SKU being offered
+- unit_price: Discounted unit price in USD
+- discount_pct: Applied discount percentage
+- total_price: Final total price including shipping
+- projected_margin_pct: Realized margin percentage (must be >= 18%)
+- status: "OFFER_PRESENTED" or "REJECTED_OUT_OF_BOUNDS"
+- explanation: Clear commercial explanation of the offer terms
+"""
+
+negotiation_investigate = LlmAgent(
+    name="negotiation_investigate",
     model=config.MODEL_FAST,
-    description="Calculates commercial pricing, applies discount caps, and formats UCP offers.",
-    instruction=NEGOTIATION_PROMPT,
-    tools=[tools.calculate_commercial_margin],
+    description="Calculates commercial pricing, applies discount caps, and verifies margins via MCP tools.",
+    instruction=NEGOTIATION_INVESTIGATE_PROMPT,
+    tools=[CommerceMCP_Tool],
+    output_key="negotiation_evidence",
+)
+
+negotiation_conclude = LlmAgent(
+    name="negotiation_conclude",
+    model=config.MODEL_FAST,
+    description="Synthesizes commercial negotiation terms into a typed NegotiationOfferFinding.",
+    instruction=NEGOTIATION_CONCLUDE_PROMPT,
     output_schema=NegotiationOfferFinding,
     output_key="active_offer",
-    disallow_transfer_to_parent=True,
-    disallow_transfer_to_peers=True,
+)
+
+negotiation_agent = SequentialAgent(
+    name="negotiation_agent",
+    description="Calculates commercial pricing, applies discount caps, and formats UCP offers.",
+    sub_agents=[negotiation_investigate, negotiation_conclude],
 )
 
 class NegotiationAgent:

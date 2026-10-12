@@ -1,17 +1,75 @@
-"""Deterministic tools invoked by Google ADK agents in VITRINE.
+"""Deterministic utility functions used by Python facade wrappers.
 
 Every tool returns plain JSON-serializable dictionaries.
-Mathematical calculations are delegated to pure deterministic backend calculators.
+Self-contained with zero dependencies on backend.app.
 """
 
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from backend.app.core.calculators.atp import calculate_atp
-from backend.app.core.calculators.transit import evaluate_transit_feasibility
-from backend.app.core.calculators.margin import calculate_margin
-from backend.app.core.services.gate import CommitmentGate
+# Standalone pure mathematical implementations (zero external dependencies)
+def calculate_atp(on_hand: int, reserved: int, safety_stock: int, requested_quantity: int) -> Dict[str, Any]:
+    available = max(0, on_hand - reserved - safety_stock)
+    return {
+        "on_hand": on_hand,
+        "reserved": reserved,
+        "safety_stock": safety_stock,
+        "available_units": available,
+        "requested_quantity": requested_quantity,
+        "is_satisfiable": available >= requested_quantity,
+    }
+
+def evaluate_transit_feasibility(
+    order_timestamp: datetime,
+    carrier_cutoff: datetime,
+    transit_hours: float,
+    deadline: datetime,
+) -> Dict[str, Any]:
+    if order_timestamp.tzinfo is None:
+        order_timestamp = order_timestamp.replace(tzinfo=timezone.utc)
+    if carrier_cutoff.tzinfo is None:
+        carrier_cutoff = carrier_cutoff.replace(tzinfo=timezone.utc)
+    if deadline.tzinfo is None:
+        deadline = deadline.replace(tzinfo=timezone.utc)
+
+    cutoff_missed = order_timestamp > carrier_cutoff
+    cutoff_delta_seconds = (carrier_cutoff - order_timestamp).total_seconds()
+    est_arrival = order_timestamp.timestamp() + (transit_hours * 3600)
+    deadline_missed = est_arrival > deadline.timestamp()
+    is_feasible = (not cutoff_missed) and (not deadline_missed)
+
+    return {
+        "is_feasible": is_feasible,
+        "cutoff_missed": cutoff_missed,
+        "cutoff_delta_hours": round(cutoff_delta_seconds / 3600.0, 2),
+        "deadline_missed": deadline_missed,
+        "transit_hours": transit_hours,
+        "reason": (
+            f"Carrier cutoff missed by {abs(round(cutoff_delta_seconds / 3600.0, 1))}h"
+            if cutoff_missed
+            else ("Delivery deadline cannot be met" if deadline_missed else "Transit feasible")
+        ),
+    }
+
+def calculate_margin(
+    unit_price: float,
+    landed_cost: float,
+    fulfilment_cost: float,
+    shipping_cost: float,
+    margin_floor_pct: float = 18.0,
+) -> Dict[str, Any]:
+    total_cost = landed_cost + fulfilment_cost + shipping_cost
+    net_margin = unit_price - total_cost
+    margin_pct = (net_margin / unit_price) * 100.0 if unit_price > 0 else 0.0
+    return {
+        "unit_price": unit_price,
+        "total_cost": round(total_cost, 2),
+        "net_margin": round(net_margin, 2),
+        "margin_pct": round(margin_pct, 2),
+        "margin_floor_pct": margin_floor_pct,
+        "violates_floor": margin_pct < margin_floor_pct,
+    }
 
 def get_node_inventory(sku: str, node_id: str) -> Dict[str, Any]:
     """Retrieve on-hand, allocated, and safety stock for a SKU at a specific node.

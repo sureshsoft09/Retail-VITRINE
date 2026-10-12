@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from google.adk.agents import LlmAgent, SequentialAgent
 from vitrine_agents import config, tools
+from vitrine_agents.mcp_tools import PromiseMCP_Tool
 from vitrine_agents.schemas import CandidatePromiseFinding
 from vitrine_agents.base import load_passport, load_prompt
 
@@ -20,14 +21,18 @@ PROMISE_INVESTIGATE_PROMPT = """
 You are the Vitrine Promise Engine Agent.
 Your job is to evaluate fulfillment feasibility for candidate nodes across the enterprise network.
 Procedure:
-1. Call get_node_inventory for each candidate node (STORE-042, DC-NORTH).
-2. Call evaluate_transit_window to check transit duration and carrier cutoffs against destination pincode.
+1. If quantity or delivery date is not specified in the user request, default to quantity=1 and standard delivery window (next business day / 48 hours). Do NOT pause to ask the user questions during transaction evaluation.
+2. Call promise_fanout with the target sku and pincode to evaluate candidate fulfillment nodes (e.g., STORE-042, DC-NORTH), transit hours, ATP units, and carrier cutoffs.
 3. Produce an evidence summary detailing inventory safety stock, carrier cutoff windows, and feasible options.
 """
 
 PROMISE_CONCLUDE_PROMPT = """
 You are converting promise investigation evidence into a typed CandidatePromiseFinding.
 Populate every field from the evidence brief.
+Important:
+- unit_price: Retail price of the product (e.g., $128.00 for SKU-4829-SILK-BLOUSE, $135.00 for SKU-4830-SILK-SHIRT). Do NOT emit 0.0.
+- shipping_cost: Carrier shipping fee ($8.50 default).
+- margin_pct: Fulfillment margin percentage (e.g. 28.5%).
 Choose the best candidate node that maximizes delivery speed while strictly adhering to safety stock.
 """
 
@@ -36,7 +41,7 @@ promise_investigate = LlmAgent(
     model=config.MODEL_FAST,
     description="Gathers ATP inventory and carrier cutoff window evidence.",
     instruction=PROMISE_INVESTIGATE_PROMPT,
-    tools=[tools.get_node_inventory, tools.evaluate_transit_window],
+    tools=[PromiseMCP_Tool],
     output_key="promise_evidence",
 )
 

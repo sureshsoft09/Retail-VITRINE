@@ -13,30 +13,55 @@ Implements Google ADK LlmAgent architecture.
 from typing import Any, Dict, List
 from pydantic import BaseModel
 
-from google.adk.agents import LlmAgent
-from vitrine_agents import config, tools
+from google.adk.agents import LlmAgent, SequentialAgent
+from vitrine_agents import config
+from vitrine_agents.mcp_tools import CommerceMCP_Tool
 from vitrine_agents.schemas import TrustScreeningFinding
 from vitrine_agents.base import load_passport, load_prompt
 
-TRUST_ANALYST_PROMPT = """
+TRUST_INVESTIGATE_PROMPT = """
 You are the Agent Trust Analyst.
 Your role is defensive security screening. You inspect inbound buyer agent credentials and AP2 mandates.
 Rules:
-1. Call screen_ap2_mandate with the buyer_agent_id and cryptographic nonce.
+1. Call verify_mandate with the buyer_agent_id and cryptographic nonce.
 2. If a nonce replay or velocity anomaly is detected, rule REJECT_UNTRUSTED and provide mandatory counter-evidence.
 3. You have NO permission or tools to alter commercial prices, inventory, or order status.
+4. Produce a security screening brief detailing observed signals, trust tier, and risk score.
 """
 
-trust_analyst_agent = LlmAgent(
-    name="trust_analyst",
+TRUST_CONCLUDE_PROMPT = """
+You are converting the security screening brief into a typed TrustScreeningFinding.
+Populate every field:
+- buyer_agent_id: Incoming buyer agent ID
+- trust_tier: "ENTERPRISE", "VERIFIED", "PROVISIONAL", or "HOSTILE"
+- verdict: "ACCEPT", "CHALLENGE_REQUIRED", or "REJECT_UNTRUSTED"
+- risk_score: Float between 0.0 and 1.0
+- findings: List of observed security or cryptographic signals
+- counter_evidence: Counter-evidence if hostile replay or velocity breach
+"""
+
+trust_investigate = LlmAgent(
+    name="trust_investigate",
     model=config.MODEL_REASONING,
-    description="Screens buyer agents and AP2 mandates against cryptographic replay attacks.",
-    instruction=TRUST_ANALYST_PROMPT,
-    tools=[tools.screen_ap2_mandate],
+    description="Inspects inbound buyer agent credentials and AP2 mandates via MCP tools.",
+    instruction=TRUST_INVESTIGATE_PROMPT,
+    tools=[CommerceMCP_Tool],
+    output_key="trust_evidence",
+)
+
+trust_conclude = LlmAgent(
+    name="trust_conclude",
+    model=config.MODEL_REASONING,
+    description="Synthesizes security screening results into a typed TrustScreeningFinding.",
+    instruction=TRUST_CONCLUDE_PROMPT,
     output_schema=TrustScreeningFinding,
     output_key="trust_finding",
-    disallow_transfer_to_parent=True,
-    disallow_transfer_to_peers=True,
+)
+
+trust_analyst_agent = SequentialAgent(
+    name="trust_analyst",
+    description="Screens buyer agents and AP2 mandates against cryptographic replay attacks.",
+    sub_agents=[trust_investigate, trust_conclude],
 )
 
 class TrustFinding(BaseModel):

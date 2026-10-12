@@ -13,7 +13,8 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from google.adk.agents import LlmAgent, SequentialAgent
-from vitrine_agents import config, tools
+from vitrine_agents import config
+from vitrine_agents.mcp_tools import PromiseMCP_Tool, CommerceMCP_Tool
 from vitrine_agents.schemas import CritiqueFinding, ObjectionFinding
 from vitrine_agents.base import load_passport, load_prompt
 
@@ -26,9 +27,9 @@ Your job is to independently verify:
 3. Does the net realized margin satisfy the policy floor (18%)?
 
 Procedure:
-1. Call evaluate_transit_window for the promise's fulfillment node.
-2. Call get_node_inventory to independently verify ATP units.
-3. Call calculate_commercial_margin to recompute net profit margin.
+1. Call get_carrier_cutoffs for the promise's fulfillment node and carrier to audit cutoff freshness.
+2. Call compute_atp or compute_transit to independently verify ATP units and transit timing.
+3. Call compute_margin to recompute net profit margin against the 18% floor.
 Produce an adversarial evidence brief citing specific discrepancies and breached thresholds.
 """
 
@@ -45,7 +46,10 @@ critic_investigate = LlmAgent(
     model=config.MODEL_REASONING,
     description="Independently verifies carrier cutoffs, ATP safety buffers, and margin floors.",
     instruction=CRITIC_INVESTIGATE_PROMPT,
-    tools=[tools.evaluate_transit_window, tools.get_node_inventory, tools.calculate_commercial_margin],
+    tools=[
+        PromiseMCP_Tool,
+        CommerceMCP_Tool,
+    ],
     output_key="critic_evidence",
 )
 

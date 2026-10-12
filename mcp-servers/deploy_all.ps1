@@ -34,3 +34,27 @@ try {
 }
 
 Write-Host "`nAll 3 MCP servers deployed successfully!" -ForegroundColor Green
+
+$GOOGLE_CLOUD_PROJECT = if ($env:GOOGLE_CLOUD_PROJECT) { $env:GOOGLE_CLOUD_PROJECT } elseif ($env:GCP_PROJECT_ID) { $env:GCP_PROJECT_ID } else { "gcp-aibuildercup-project" }
+$REGION = if ($env:GOOGLE_CLOUD_LOCATION) { $env:GOOGLE_CLOUD_LOCATION } elseif ($env:GCP_REGION) { $env:GCP_REGION } else { "us-central1" }
+
+try {
+    $catRaw = (gcloud run services describe vitrine-mcp-catalog --region=$REGION --project=$GOOGLE_CLOUD_PROJECT --format="value(status.url)" 2>$null)
+    $promRaw = (gcloud run services describe vitrine-mcp-promise --region=$REGION --project=$GOOGLE_CLOUD_PROJECT --format="value(status.url)" 2>$null)
+    $commRaw = (gcloud run services describe vitrine-mcp-commerce --region=$REGION --project=$GOOGLE_CLOUD_PROJECT --format="value(status.url)" 2>$null)
+
+    $catUrl = if ($catRaw) { $catRaw.Trim() } else { "(not deployed yet)" }
+    $promUrl = if ($promRaw) { $promRaw.Trim() } else { "(not deployed yet)" }
+    $commUrl = if ($commRaw) { $commRaw.Trim() } else { "(not deployed yet)" }
+
+    Write-Host "`n==========================================================" -ForegroundColor Green
+    Write-Host "MCP Servers Cloud Run Status:" -ForegroundColor Green
+    Write-Host "==========================================================" -ForegroundColor Green
+    Write-Host "`nEndpoints for transaction/.env:" -ForegroundColor Yellow
+    Write-Host "MCP_CATALOG_URL=$catUrl" -ForegroundColor Cyan
+    Write-Host "MCP_PROMISE_URL=$promUrl" -ForegroundColor Cyan
+    Write-Host "MCP_COMMERCE_URL=$commUrl" -ForegroundColor Cyan
+    Write-Host "==========================================================" -ForegroundColor Green
+} catch {
+    Write-Host "Could not retrieve endpoints: $_" -ForegroundColor DarkGray
+}
