@@ -47,6 +47,8 @@ Thumbs.db
 *.local
 credentials.json
 service-account-key.json
+firebase_key.json
+*key*.json
 
 # Test & Coverage
 .pytest_cache/

@@ -66,6 +66,58 @@ export interface CommitmentRecord {
   carrier_id: string;
   buyer_agent_id: string;
   mandate_id: string;
+  promised_delivery_date?: string;
+  gate_evaluation_id?: string;
+}
+
+export interface UCPOffer {
+  offer_id: string;
+  txn_id: string;
+  sku: string;
+  unit_price: number;
+  original_price?: number;
+  discount_pct?: number;
+  discount_requested_pct?: number;
+  discount_capped?: boolean;
+  shipping_cost?: number;
+  total_price: number;
+  projected_margin_pct?: number;
+  fulfilment_promise?: {
+    fulfilment_node_id: string;
+    sku: string;
+    name?: string;
+    atp_units: number;
+    carrier: string;
+    transit_hours: number;
+    unit_price: number;
+    shipping_cost: number;
+    margin_pct: number;
+    guaranteed_delivery_utc: string;
+    is_substitute?: boolean;
+    substitute_reason?: string;
+    preserved_hard_constraints?: string[];
+  };
+  status: string;
+  expires_at_utc: string;
+  merchant_signature: string;
+}
+
+export interface TransactionResponse {
+  txn_id: string;
+  status: string;
+  active_offer?: UCPOffer;
+  objections?: Array<{
+    objection_id: string;
+    condition_id: string;
+    summary: string;
+    detail: string;
+    blocking: boolean;
+    suggested_resolution?: string;
+    evidence_ref?: string;
+  }>;
+  gate_passed: boolean;
+  step_events: AgentStep[];
+  message: string;
 }
 
 export interface AutonomyPolicy {
@@ -75,4 +127,24 @@ export interface AutonomyPolicy {
   buyer_reputation_floor: number;
   kill_switch_active: boolean;
   replay_mode_active: boolean;
+}
+
+export interface FraudIncident {
+  incident_id: string;
+  txn_id: string;
+  buyer_agent_id: string;
+  mandate_id: string;
+  threat_score: number;
+  reason: string;
+  status: "QUARANTINED" | "APPROVED" | "REJECTED";
+  created_at: string;
+  details?: Record<string, any>;
+}
+
+export interface ServiceHealth {
+  status: string;
+  service: string;
+  version: string;
+  region: string;
+  latency_ms?: number;
 }
