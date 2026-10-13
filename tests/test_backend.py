@@ -100,5 +100,51 @@ class TestBackendServices(unittest.TestCase):
         self.assertIn("urn:ucp:capability:delivery_promise_negotiation", res["capabilities"])
         self.assertIn("fabric_composition", res["attribute_vocabulary"])
 
+    def test_ucp_endpoints_full_cycle(self):
+        import asyncio
+        from backend.app.ucp.main import (
+            ucp_initiate_session,
+            ucp_discover,
+            ucp_negotiate,
+            ucp_accept_offer,
+            UCPSessionRequest,
+            UCPDiscoverRequest,
+            UCPNegotiateRequest,
+            UCPAcceptRequest,
+        )
+
+        # 1. Session Initialization
+        sess = ucp_initiate_session(UCPSessionRequest(buyer_agent_id="buyer-agent-test"))
+        self.assertEqual(sess["status"], "ESTABLISHED")
+        self.assertIn("ucp-sess-", sess["session_id"])
+
+        # 2. Multimodal Product Discovery
+        disc = ucp_discover(UCPDiscoverRequest(query="Mulberry Silk"))
+        self.assertEqual(disc["status"], "SUCCESS")
+        self.assertGreaterEqual(disc["matches_count"], 1)
+
+        # 3. Negotiation
+        neg_req = UCPNegotiateRequest(
+            txn_id="txn-ucp-test-01",
+            buyer_agent_id="buyer-agent-test",
+            sku="SKU-4829-SILK-BLOUSE",
+            target_delivery_date="2026-10-15T10:00:00Z",
+            target_discount_pct=5.0,
+            ap2_mandate={"mandate_id": "mandate-ucp-01", "nonce": "nonce-ucp-01", "signature_valid": True},
+        )
+        neg_res = asyncio.run(ucp_negotiate(neg_req))
+        self.assertIn(neg_res["status"], ("OFFER_PRESENTED", "SUBSTITUTION_OFFER_PRESENTED"))
+
+        # 4. Accept & Immutable Ledger Commitment
+        acc_req = UCPAcceptRequest(
+            txn_id="txn-ucp-test-01",
+            buyer_agent_id="buyer-agent-test",
+            offer_id="off-test-01",
+            ap2_mandate={"mandate_id": "mandate-ucp-01", "signature_valid": True},
+        )
+        acc_res = ucp_accept_offer("off-test-01", acc_req)
+        self.assertEqual(acc_res["status"], "COMMITTED")
+        self.assertEqual(len(acc_res["commitment_record"]["current_hash"]), 64)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

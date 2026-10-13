@@ -12,13 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir fastapi uvicorn pydantic google-cloud-bigquery google-cloud-firestore httpx pyyaml python-dotenv google-adk google-cloud-aiplatform mcp
+COPY backend/app/ucp/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend /app/backend
 COPY agents /app/agents
 COPY shared /app/shared
 
-EXPOSE 8082
+EXPOSE 8080
 
-CMD ["uvicorn", "backend.app.ucp.main:app", "--host", "0.0.0.0", "--port", "8082"]
+CMD exec uvicorn backend.app.ucp.main:app --host 0.0.0.0 --port ${PORT:-8080}
