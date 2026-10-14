@@ -185,32 +185,49 @@ export const TransactionTheatre: React.FC = () => {
 
     try {
       const resp = await api.executeTransaction({
+        txn_id: newTxnId,
+        buyer_agent_id: `buyer-${selectedPersona}`,
         persona: selectedPersona,
         naturalLanguagePrompt: customPrompt,
         requestedDiscountPct: requestedDiscount,
         sku: "SKU-4829-SILK-BLOUSE",
       });
 
-      if (resp.step_events && resp.step_events.length > 0) {
-        setActiveSteps(resp.step_events);
-      }
-
-      if (resp.active_offer) {
-        setActiveOffer(resp.active_offer);
-      } else {
+      if (resp.status === "REJECTED_HOSTILE") {
+        setActiveSteps([
+          {
+            step_seq: 1,
+            timestamp: new Date().toISOString(),
+            agent: "ag-agent-trust-analyst",
+            tier: "A0",
+            phase: "SECURITY_SCREEN",
+            message: `⛔ REJECTED: ${resp.trust_verdict?.explanation || resp.message || "Hostile replay attack detected."}`,
+            status: "BLOCKED",
+            data: resp.trust_verdict,
+          },
+        ]);
         setActiveOffer(null);
+      } else {
+        if (resp.step_events && resp.step_events.length > 0) {
+          setActiveSteps(resp.step_events);
+        }
+        if (resp.active_offer) {
+          setActiveOffer(resp.active_offer);
+        } else {
+          setActiveOffer(null);
+        }
       }
 
       // Update Gate Conditions based on live evaluation
       const gateRes = await api.evaluateGate({
-        txn_id: resp.txn_id,
+        txn_id: resp.txn_id || newTxnId,
         margin_pct: resp.active_offer?.projected_margin_pct ?? (selectedPersona === "bargain_hunter" ? 9.4 : 27.5),
         discount_pct: requestedDiscount,
         buyer_reputation: selectedPersona === "hostile" ? 0.15 : 0.95,
         mandate_signature_valid: selectedPersona !== "hostile",
       });
 
-      if (gateRes.conditions) {
+      if (gateRes.conditions && gateRes.conditions.length > 0) {
         setConditions(gateRes.conditions);
       }
     } catch (err: any) {

@@ -67,6 +67,8 @@ export const api = {
 
   // Multi-Agent Transaction Execution (Vertex AI Agent Engine / Supervisor)
   async executeTransaction(params: {
+    txn_id?: string;
+    buyer_agent_id?: string;
     persona: "honest_shopper" | "bargain_hunter" | "hostile";
     action?: "NEGOTIATE" | "DISCOVER";
     sku?: string;
@@ -79,7 +81,13 @@ export const api = {
       signature_valid?: boolean;
     };
   }): Promise<TransactionResponse> {
+    const txnId = params.txn_id || `txn-live-${Date.now().toString(36)}`;
+    const buyerAgentId = params.buyer_agent_id || `buyer-${params.persona}`;
+    const isHostile = params.persona === "hostile";
+
     const payload = {
+      txn_id: txnId,
+      buyer_agent_id: buyerAgentId,
       persona: params.persona,
       action: params.action || "NEGOTIATE",
       sku: params.sku || "SKU-4829-SILK-BLOUSE",
@@ -93,8 +101,8 @@ export const api = {
       requested_discount_pct: params.requestedDiscountPct ?? (params.persona === "bargain_hunter" ? 35.0 : 10.0),
       ap2_mandate: params.ap2Mandate || {
         mandate_id: `mandate-${params.persona}-${Date.now().toString(36)}`,
-        nonce: `nonce-${Date.now().toString(36)}`,
-        signature_valid: params.persona !== "hostile",
+        nonce: isHostile ? "replayed_nonce_test_attack" : `nonce-${Date.now().toString(36)}`,
+        signature_valid: !isHostile,
       },
     };
 
@@ -122,19 +130,40 @@ export const api = {
   }): Promise<GateResult> {
     const payload = {
       txn_id: params?.txn_id || `txn-gate-${Date.now().toString(36)}`,
-      sku: params?.sku || "SKU-4830-SILK-SHIRT",
-      atp_units: params?.atp_units ?? 18,
-      transit_hours: params?.transit_hours ?? 18.5,
-      margin_pct: params?.margin_pct ?? 28.5,
+      on_hand: params?.atp_units ? params.atp_units + 4 : 16,
+      reserved: 2,
+      safety_stock: 2,
+      requested_qty: 1,
+      transit_hours: params?.transit_hours ?? 18.0,
+      unit_price: 128.00,
+      landed_cost: 65.00,
+      fulfilment_cost: 12.00,
+      shipping_cost: 10.00,
       discount_pct: params?.discount_pct ?? 10.0,
       buyer_reputation: params?.buyer_reputation ?? 0.95,
-      mandate_signature_valid: params?.mandate_signature_valid ?? true,
+      mandate: {
+        mandate_id: `mandate-gate-${Date.now().toString(36)}`,
+        signature_valid: params?.mandate_signature_valid ?? true,
+        is_replayed: !(params?.mandate_signature_valid ?? true),
+      },
     };
 
-    return fetchJson<GateResult>(`${BFF_BASE}/api/gate/evaluate`, {
+    const res = await fetchJson<any>(`${BFF_BASE}/api/gate/evaluate`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
+
+    // Normalize condition ids
+    const normalizedConditions = (res.conditions || []).map((c: any) => ({
+      ...c,
+      id: c.id || c.condition_id,
+      description: c.description || c.name || c.id || c.condition_id,
+    }));
+
+    return {
+      ...res,
+      conditions: normalizedConditions,
+    };
   },
 
   // Cryptographic Ledger Verification
