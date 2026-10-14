@@ -115,8 +115,14 @@ export interface TransactionResponse {
     suggested_resolution?: string;
     evidence_ref?: string;
   }>;
-  gate_passed: boolean;
-  step_events: AgentStep[];
+  gate_passed?: boolean;
+  step_events?: AgentStep[];
+  trust_verdict?: {
+    verdict?: string;
+    threat_score?: number;
+    explanation?: string;
+    [key: string]: any;
+  };
   message: string;
 }
 

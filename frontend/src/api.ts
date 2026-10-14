@@ -65,6 +65,21 @@ export const api = {
     return fetchJson(url);
   },
 
+  // Cloud Run Catalog Enricher (ag-catalog-enricher on /enrich/chunk)
+  async triggerCatalogueEnrichment(skus?: string[]): Promise<any> {
+    return fetchJson(`${BFF_BASE}/api/catalogue/enrich`, {
+      method: "POST",
+      body: JSON.stringify({ skus: skus || ["SKU-4829-SILK-BLOUSE"] }),
+    });
+  },
+
+  // Cloud Run Autonomous Supplier Risk Sentinel (sent-supplier-risk-watch)
+  async runSupplierRiskSentinel(): Promise<any> {
+    return fetchJson(`${BFF_BASE}/api/sentinels/supplier-risk/run`, {
+      method: "POST",
+    });
+  },
+
   // Multi-Agent Transaction Execution (Vertex AI Agent Engine / Supervisor)
   async executeTransaction(params: {
     txn_id?: string;

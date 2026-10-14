@@ -186,12 +186,17 @@ export const ProductBrain: React.FC = () => {
             <span className="text-2xl font-bold font-mono text-emerald-400">{coveragePct}%</span>
           </div>
           <button
-            onClick={() => {
+            onClick={async () => {
               setIsEnriching(true);
-              setTimeout(() => {
+              try {
+                await api.triggerCatalogueEnrichment();
                 setCoveragePct(98);
+                fetchLiveProducts();
+              } catch (err) {
+                console.error("Enrichment error:", err);
+              } finally {
                 setIsEnriching(false);
-              }, 600);
+              }
             }}
             disabled={isEnriching}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg text-xs font-mono font-bold shadow-lg shadow-indigo-600/30 transition-all"
