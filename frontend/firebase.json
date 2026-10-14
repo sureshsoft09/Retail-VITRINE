@@ -1,7 +1,7 @@
 {
   "hosting": [
     {
-      "site": "vitrine-autonoumous-commerce",
+      "site": "vitrine-merchant-commerce",
       "public": "build",
       "ignore": [
         "firebase.json",
@@ -17,6 +17,21 @@
     },
     {
       "site": "vitrine-autonomous-commerce",
+      "public": "build",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "site": "vitrine-autonoumous-commerce",
       "public": "build",
       "ignore": [
         "firebase.json",

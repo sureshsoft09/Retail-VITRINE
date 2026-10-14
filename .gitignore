@@ -30,6 +30,8 @@ node_modules/
 .eslintcache
 frontend/dist/
 frontend/build/
+frontend/EnhancedSrc/
+EnhancedSrc/
 .next/
 out/
 .parcel-cache
