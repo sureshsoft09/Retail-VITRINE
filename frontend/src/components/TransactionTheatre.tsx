@@ -237,25 +237,35 @@ export const TransactionTheatre: React.FC = () => {
     }
   };
 
-  // Commit accepted offer to BigQuery Immutable SHA-256 Ledger
+  // Commit accepted offer to BigQuery Immutable SHA-256 Ledger via Universal Commerce Protocol (UCP)
   const handleCommitToLedger = async () => {
     if (!activeOffer) return;
     setIsCommitting(true);
     setErrorMsg(null);
 
-    try {
-      const resp = await api.commitOrder({
-        txn_id: activeOffer.txn_id || activeTxnId,
-        sku: activeOffer.sku,
-        quantity: 1,
-        unit_price: activeOffer.unit_price,
-        fulfilment_node_id: activeOffer.fulfilment_promise?.fulfilment_node_id || "DC-NORTH",
-        carrier_id: activeOffer.fulfilment_promise?.carrier || "FedEx-Express",
-        buyer_agent_id: `buyer-${selectedPersona}-verified`,
-        mandate_id: `ap2-mandate-${Date.now().toString(36)}`,
-      });
+    const offerId = activeOffer.offer_id || `offer-${activeOffer.sku || "silk"}-${Date.now().toString(36)}`;
+    const mandateId = `ap2-mandate-${Date.now().toString(36)}`;
+    const payload = {
+      txn_id: activeOffer.txn_id || activeTxnId,
+      offer_id: offerId,
+      sku: activeOffer.sku,
+      quantity: 1,
+      unit_price: activeOffer.unit_price,
+      currency: "USD",
+      fulfilment_node_id: activeOffer.fulfilment_promise?.fulfilment_node_id || "DC-NORTH",
+      carrier_id: activeOffer.fulfilment_promise?.carrier || "FedEx-Express",
+      buyer_agent_id: `buyer-${selectedPersona}-verified`,
+      mandate_id: mandateId,
+      ap2_mandate: {
+        mandate_id: mandateId,
+        signature_valid: true,
+        nonce: `nonce-${Date.now().toString(36)}`,
+      },
+    };
 
-      setCommittedRecord(resp.record);
+    try {
+      const resp = await api.acceptUCPOffer(offerId, payload);
+      setCommittedRecord(resp.record || resp.commitment_record);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to commit to cryptographic ledger");
     } finally {

@@ -253,11 +253,21 @@ export const api = {
     return fetchJson(`${UCP_BASE}/.well-known/ucp`);
   },
 
-  // UCP Accept Offer Endpoint
+  // UCP Accept Offer Endpoint (Settlement via Universal Commerce Protocol with resilient fallback)
   async acceptUCPOffer(offerId: string, payload: any): Promise<any> {
-    return fetchJson(`${UCP_BASE}/ucp/offer/${offerId}/accept`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetchJson<any>(`${UCP_BASE}/ucp/offer/${offerId}/accept`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return {
+        ...res,
+        record: res.commitment_record || res.record,
+      };
+    } catch (err) {
+      console.warn("Cloud Run UCP accept failed, falling back to BFF ledger commit:", err);
+      const bffRes = await this.commitOrder(payload);
+      return bffRes;
+    }
   },
 };
