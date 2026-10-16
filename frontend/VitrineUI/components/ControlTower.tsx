@@ -20,6 +20,8 @@ import {
   Shirt,
   Radio,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { api } from "../api";
 import {
@@ -46,36 +48,40 @@ const conversionComparisonData = [
     stage: "Agent Discovery",
     baseline: 32,
     vitrine: 94,
-    note: "Product Brain attribute readiness",
+    delta: "+62% Lift",
+    note: "Product Brain 21-point attribute enrichment & Virtual Try-On",
   },
   {
     stage: "ATP Verification",
     baseline: 48,
     vitrine: 91,
-    note: "Multi-node inventory & substitutes",
+    delta: "+43% Lift",
+    note: "Autonomous cross-hub ATP routing (DC-North, DC-South & Flagship)",
   },
   {
     stage: "Promise Critic",
     baseline: 41,
     vitrine: 99,
-    note: "11-Gate deterministic verification",
+    delta: "+58% Lift",
+    note: "11-Gate deterministic SLA, margin floor & cutoff validation",
   },
   {
     stage: "Order Conversion",
     baseline: 38,
     vitrine: 89,
-    note: "Autonomous profitable conversion",
+    delta: "+51% Lift",
+    note: "Instant autonomous checkout & cryptographic receipt issuance",
   },
 ];
 
 const revenueTrendData = [
-  { day: "Mon", baseline: 34200, protected: 71400, orders: 184 },
-  { day: "Tue", baseline: 36800, protected: 78900, orders: 202 },
-  { day: "Wed", baseline: 35100, protected: 82400, orders: 215 },
-  { day: "Thu", baseline: 39400, protected: 88200, orders: 229 },
-  { day: "Fri", baseline: 44000, protected: 96500, orders: 254 },
-  { day: "Sat", baseline: 48200, protected: 108400, orders: 281 },
-  { day: "Sun", baseline: 41900, protected: 94800, orders: 248 },
+  { day: "Mon", baseline: 34200, protected: 71400, orders: 184, lift: "+$37.2k" },
+  { day: "Tue", baseline: 36800, protected: 78900, orders: 202, lift: "+$42.1k" },
+  { day: "Wed", baseline: 35100, protected: 82400, orders: 215, lift: "+$47.3k" },
+  { day: "Thu", baseline: 39400, protected: 88200, orders: 229, lift: "+$48.8k" },
+  { day: "Fri", baseline: 44000, protected: 96500, orders: 254, lift: "+$52.5k" },
+  { day: "Sat", baseline: 48200, protected: 108400, orders: 281, lift: "+$60.2k" },
+  { day: "Sun", baseline: 41900, protected: 94800, orders: 248, lift: "+$52.9k" },
 ];
 
 export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
@@ -93,6 +99,7 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
 
   const [isRunningSentinel, setIsRunningSentinel] = useState(false);
   const [sentinelEvent, setSentinelEvent] = useState<any | null>(null);
+  const [architectureExpanded, setArchitectureExpanded] = useState(false);
 
   const handleRunSentinel = async () => {
     setIsRunningSentinel(true);
@@ -115,48 +122,6 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
     }
   };
 
-  const differentiationPillars = [
-    {
-      title: "AI Buyer Agents",
-      desc: "Inbound personal stylists & procurement agents",
-      tab: "theatre" as NavTab,
-    },
-    {
-      title: "Product Discoverability",
-      desc: "Structured catalog intelligence for agent queries",
-      tab: "brain" as NavTab,
-    },
-    {
-      title: "Promise Verification",
-      desc: "Real-time ATP, carrier SLA & margin validation",
-      tab: "promise" as NavTab,
-    },
-    {
-      title: "Commitment Critic",
-      desc: "11-point deterministic gate before any offer",
-      tab: "theatre" as NavTab,
-    },
-    {
-      title: "Autonomous Commerce",
-      desc: "Self-executing offers & smart substitutions",
-      tab: "theatre" as NavTab,
-    },
-    {
-      title: "Trust",
-      desc: "Adversarial bot & mandate replay sentinel",
-      tab: "fraud" as NavTab,
-    },
-    {
-      title: "Governance",
-      desc: "Merchant-defined discount & margin guardrails",
-      tab: "governance" as NavTab,
-    },
-    {
-      title: "Auditability",
-      desc: "Tamper-evident ledger of every commitment",
-      tab: "ledger" as NavTab,
-    },
-  ];
 
   const executiveKpis = [
     {
@@ -337,71 +302,37 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
       {/* CONTROL TOWER HERO — Enterprise Commerce Platform + Agentic Commerce Intelligence */}
       <div className="rounded-2xl bg-gradient-to-br from-[#181614] via-[#211E1B] to-[#1D3B2C] text-white p-6 sm:p-7 shadow-lg border border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          <div className="lg:col-span-8 space-y-3.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#95C9AA]">
-              <Bot className="w-3.5 h-3.5" />
-              <span>VITRINE Control Tower · Next-Generation Agent Commerce Operating System</span>
+          <div className="lg:col-span-8 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#95C9AA]">
+                <Bot className="w-3.5 h-3.5" />
+                <span>VITRINE Control Tower · Next-Generation Agent Commerce Operating System</span>
+              </div>
+              <button
+                onClick={handleRunSentinel}
+                disabled={isRunningSentinel}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4942A]/20 hover:bg-[#D4942A]/30 text-[#F6C867] border border-[#D4942A]/40 text-xs font-semibold transition-all cursor-pointer shadow-xs"
+              >
+                <Radio className={`w-3.5 h-3.5 ${isRunningSentinel ? "animate-spin" : "animate-pulse"}`} />
+                <span>{isRunningSentinel ? "Querying Supply Chains..." : "Run Supplier Sentinel"}</span>
+              </button>
             </div>
             <h1 className="font-serif font-bold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
               Enterprise Commerce Intelligence Built for AI Buyer Agents.
             </h1>
-            <p className="text-sm sm:text-base text-ivory-200 leading-relaxed max-w-3xl">
+            <p className="text-xs sm:text-sm text-ivory-200 leading-relaxed max-w-3xl">
               Traditional storefronts lose{" "}
               <span className="underline decoration-[#D4942A] font-semibold text-white">
                 62% of agentic and high-intent demand
               </span>{" "}
-              because catalogs lack structured specs for <strong className="text-white">AI Buyer Agents</strong>, primary hubs stock out, or unverified promises erode margin.{" "}
-              <strong className="text-white">VITRINE</strong> combines{" "}
-              <span className="text-[#95C9AA] font-semibold">
-                Product Brain, Promise Verification, the 11-Gate Commitment Critic, and Autonomous Governance
-              </span>{" "}
-              into one enterprise operating layer.
+              because catalogs lack structured specs for <strong className="text-white">AI Buyer Agents</strong>, primary fulfillment hubs stock out, or unverified promises erode margin.{" "}
+              <strong className="text-white">VITRINE</strong> unifies Product Brain, Promise Verification, the 11-Gate Commitment Critic, and Autonomous Governance into a single operational layer.
             </p>
-
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <button
-                onClick={() => navigateTo("theatre")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2D6A4F] hover:bg-[#3B7A57] text-white text-xs font-bold shadow-xs transition-all border border-[#3B7A57]"
-              >
-                <Bot className="w-4 h-4" />
-                <span>Launch Agent Commerce</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => navigateTo("brain", "catalog")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all border border-white/15"
-              >
-                <Sparkles className="w-4 h-4 text-[#F2B5D4]" />
-                <span>Inspect Product Brain</span>
-              </button>
-              <button
-                onClick={() => navigateTo("promise")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all border border-white/15"
-              >
-                <Cpu className="w-4 h-4 text-[#F6C867]" />
-                <span>Promise Intelligence</span>
-              </button>
-              <button
-                onClick={() => navigateTo("brain", "vto")}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-ivory-200 text-xs font-semibold transition-all border border-white/10"
-              >
-                <Shirt className="w-3.5 h-3.5 text-[#F2B5D4]" />
-                <span>Virtual Try-On</span>
-              </button>
-              <button
-                onClick={handleRunSentinel}
-                disabled={isRunningSentinel}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#D4942A]/20 hover:bg-[#D4942A]/30 text-[#F6C867] text-xs font-semibold transition-all border border-[#D4942A]/40"
-              >
-                <Radio className={`w-3.5 h-3.5 ${isRunningSentinel ? "animate-spin" : "animate-pulse"}`} />
-                <span>{isRunningSentinel ? "Querying Supply Chains..." : "Run Autonomous Supplier Sentinel"}</span>
-              </button>
-            </div>
           </div>
 
           {/* Right Agentic Conversion Lift Snapshot */}
-          <div className="lg:col-span-4 bg-white/[0.06] backdrop-blur-md rounded-2xl p-5 border border-white/15 space-y-3.5">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <div className="lg:col-span-4 bg-white/[0.06] backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/15 space-y-3">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div>
                 <div className="text-[11px] font-bold uppercase tracking-wider text-ivory-300">
                   Agentic Commerce Conversion
@@ -415,26 +346,26 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10">
                 <div className="text-[11px] text-ivory-300">Legacy Catalog</div>
-                <div className="text-2xl font-serif font-bold text-ivory-300 mt-1">
+                <div className="text-xl sm:text-2xl font-serif font-bold text-ivory-300 mt-0.5">
                   38.0%
                 </div>
-                <div className="text-[10px] text-clay-300 mt-1">
-                  Rejected by AI buyer agents
+                <div className="text-[10px] text-clay-300 mt-0.5">
+                  Rejected by buyer agents
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#2D6A4F]/30 border border-[#3B7A57]">
+              <div className="p-2.5 rounded-xl bg-[#2D6A4F]/30 border border-[#3B7A57]">
                 <div className="text-[11px] text-[#95C9AA] font-semibold">
                   VITRINE Agent OS
                 </div>
-                <div className="text-2xl font-serif font-bold text-white mt-1 flex items-center gap-1">
+                <div className="text-xl sm:text-2xl font-serif font-bold text-white mt-0.5 flex items-center gap-1">
                   <span>89.0%</span>
                   <ArrowUpRight className="w-4 h-4 text-[#95C9AA]" />
                 </div>
-                <div className="text-[10px] text-ivory-200 mt-1">
-                  Critic-verified commitments
+                <div className="text-[10px] text-ivory-200 mt-0.5">
+                  Critic-verified promises
                 </div>
               </div>
             </div>
@@ -449,24 +380,6 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* 8 Core Agentic Commerce Differentiators Strip — 4x2 grid aligned with KPI cards below, zero clipped text */}
-        <div className="mt-6 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {differentiationPillars.map((p) => (
-            <button
-              key={p.title}
-              onClick={() => navigateTo(p.tab)}
-              className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-white group-hover:text-[#95C9AA] transition-colors leading-snug">
-                {p.title}
-              </div>
-              <div className="text-[11px] text-ivory-300 mt-1 leading-snug">
-                {p.desc}
-              </div>
-            </button>
-          ))}
         </div>
       </div>
 
@@ -575,7 +488,7 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
               <div
                 key={kpi.label}
                 onClick={() => navigateTo(kpi.targetTab)}
-                className={`p-5 rounded-2xl bg-white border ${st.cardBorder} shadow-enterprise transition-all cursor-pointer group flex flex-col justify-between`}
+                className={`p-4 sm:p-5 rounded-2xl bg-white border ${st.cardBorder} shadow-enterprise transition-all cursor-pointer group flex flex-col justify-between h-full`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -585,7 +498,7 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
                       {kpi.badge}
                     </span>
                     <div
-                      className={`w-8 h-8 rounded-xl border flex items-center justify-center ${st.iconBg} group-hover:scale-105 transition-transform`}
+                      className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${st.iconBg} group-hover:scale-105 transition-transform`}
                     >
                       <Icon className="w-4 h-4" />
                     </div>
@@ -605,11 +518,11 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-ivory-200 flex items-center justify-between gap-2">
+                <div className="mt-3 pt-2.5 border-t border-ivory-200 flex items-start justify-between gap-2">
                   <p className="text-[11px] text-ink-600 leading-snug">
                     {kpi.sub}
                   </p>
-                  <ArrowRight className="w-3.5 h-3.5 text-ink-400 group-hover:text-ink-900 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ArrowRight className="w-3.5 h-3.5 text-ink-400 group-hover:text-ink-900 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
                 </div>
               </div>
             );
@@ -617,242 +530,342 @@ export const ControlTower: React.FC<ControlTowerProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* SECTION 2: VITRINE CAPABILITY ARCHITECTURE (6 Core Capabilities) */}
-      <div className="p-6 rounded-2xl bg-white border border-ivory-300 shadow-enterprise">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-ivory-200">
+      {/* SECTION 2: ENHANCED VISUAL PERFORMANCE HUB (PICTORIAL CHARTS MOVED UP) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Left Chart: Enhanced Agentic Conversion Funnel */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-white border border-ivory-300 shadow-enterprise flex flex-col justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-sage-700">
-              VITRINE Agentic Commerce Architecture
-            </span>
-            <h3 className="font-serif font-bold text-xl text-ink-900 mt-0.5">
-              How Product Brain, Promise Intelligence, Agent Commerce & Commitment Critic Work Together
-            </h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {capabilityCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div
-                key={card.step}
-                onClick={() => navigateTo(card.tab, card.subSection)}
-                className={`p-5 rounded-xl border ${card.accent} hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group`}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${card.badgeClass}`}
-                    >
-                      {card.step} · {card.capability}
-                    </span>
-                    <Icon className="w-4 h-4 text-ink-700" />
-                  </div>
-                  <h4 className="font-serif font-bold text-base text-ink-900">
-                    {card.title}
-                  </h4>
-                  <div className="text-xs font-semibold text-sage-800 mt-1">
-                    “{card.question}”
-                  </div>
-                  <p className="text-xs text-ink-600 mt-2 leading-relaxed">
-                    {card.description}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-ivory-300/80 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-ink-800">
-                    {card.outcome}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-sage-700 group-hover:translate-x-0.5 transition-transform">
-                    <span>{card.cta}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </div>
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div>
+                <h3 className="text-base font-serif font-bold text-ink-900 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-sage-700" />
+                  <span>AI Buyer Agent Conversion: Legacy Store vs. VITRINE</span>
+                </h3>
+                <p className="text-xs text-ink-600 mt-0.5">
+                  How Product Brain discoverability and Promise Verification lift autonomous conversion from 38% to 89%.
+                </p>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* SECTION 3: CHARTS — AGENTIC CONVERSION & REVENUE PROTECTED */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Chart: Agentic Conversion Funnel */}
-        <div className="p-6 rounded-2xl bg-white border border-ivory-300 shadow-enterprise">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-serif font-bold text-ink-900 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-sage-700" />
-                <span>AI Buyer Agent Conversion: Legacy Store vs. VITRINE</span>
-              </h3>
-              <p className="text-xs text-ink-600 mt-0.5">
-                How Product Brain discoverability and Promise Verification lift autonomous conversion from 38% to 89%.
-              </p>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-sage-50 text-sage-800 border border-sage-200 font-bold shrink-0">
+                +51% Overall Lift
+              </span>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-sage-50 text-sage-700 border border-sage-200 font-semibold shrink-0">
-              +51% Conversion Lift
-            </span>
-          </div>
 
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={conversionComparisonData}
-                margin={{ top: 10, right: 15, left: -15, bottom: 5 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#E6DFD3"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="stage"
-                  stroke="#57534E"
-                  fontSize={11}
-                  tickLine={false}
-                />
-                <YAxis
-                  stroke="#57534E"
-                  fontSize={11}
-                  tickLine={false}
-                  unit="%"
-                  domain={[0, 100]}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#FFFFFF",
-                    borderColor: "#E6DFD3",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    color: "#1C1917",
-                  }}
-                />
-                <Bar
-                  dataKey="baseline"
-                  name="Legacy Storefront (%)"
-                  fill="#D6CFC2"
-                  radius={[6, 6, 0, 0]}
-                />
-                <Bar
-                  dataKey="vitrine"
-                  name="VITRINE Agent OS (%)"
-                  radius={[6, 6, 0, 0]}
+            <div className="h-56 w-full mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={conversionComparisonData}
+                  margin={{ top: 10, right: 15, left: -15, bottom: 5 }}
                 >
-                  {conversionComparisonData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={index === 3 ? "#2D6A4F" : "#3B7A57"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#E6DFD3"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="stage"
+                    stroke="#57534E"
+                    fontSize={11}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#57534E"
+                    fontSize={11}
+                    tickLine={false}
+                    unit="%"
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 rounded-xl border border-ivory-300 shadow-lg text-xs space-y-1.5 min-w-[240px]">
+                            <div className="font-serif font-bold text-ink-900 border-b border-ivory-200 pb-1 flex items-center justify-between">
+                              <span>{data.stage}</span>
+                              <span className="text-[10px] font-bold text-sage-800 bg-sage-50 px-2 py-0.5 rounded-full border border-sage-200">
+                                {data.delta}
+                              </span>
+                            </div>
+                            <div className="space-y-1 text-[11px] pt-0.5">
+                              <div className="flex justify-between items-center">
+                                <span className="text-ink-500">VITRINE Agent OS:</span>
+                                <span className="font-bold text-[#2D6A4F]">{data.vitrine}%</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-ink-500">Legacy Storefront:</span>
+                                <span className="font-semibold text-ink-600">{data.baseline}%</span>
+                              </div>
+                              <div className="pt-1 border-t border-ivory-100 text-[10px] text-ink-600">
+                                {data.note}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar
+                    dataKey="baseline"
+                    name="Legacy Storefront (%)"
+                    fill="#D6CFC2"
+                    radius={[5, 5, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="vitrine"
+                    name="VITRINE Agent OS (%)"
+                    radius={[5, 5, 0, 0]}
+                  >
+                    {conversionComparisonData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={index === 3 ? "#2D6A4F" : "#3B7A57"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-ivory-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          {/* Enhanced Stage Breakdown Pills with Delta Badges */}
+          <div className="mt-3 pt-3 border-t border-ivory-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             {conversionComparisonData.map((d) => (
               <div key={d.stage} className="p-2 rounded-lg bg-ivory-50 border border-ivory-200">
                 <div className="text-[10px] font-semibold text-ink-500">
                   {d.stage}
                 </div>
-                <div className="text-xs font-bold text-ink-900 mt-0.5">
-                  {d.baseline}% → <span className="text-sage-700">{d.vitrine}%</span>
+                <div className="text-xs font-bold text-ink-900 mt-0.5 flex items-center justify-center gap-1">
+                  <span>{d.baseline}%</span>
+                  <span className="text-ink-400">→</span>
+                  <span className="text-sage-800">{d.vitrine}%</span>
+                </div>
+                <div className="text-[9px] font-bold text-sage-800 mt-0.5">
+                  {d.delta}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right Chart: Weekly Autonomous Revenue Protected */}
-        <div className="p-6 rounded-2xl bg-white border border-ivory-300 shadow-enterprise">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-serif font-bold text-ink-900 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-berry-700" />
-                <span>Autonomous Revenue Protected & Verified Commitments</span>
-              </h3>
-              <p className="text-xs text-ink-600 mt-0.5">
-                GMV captured via AI buyer agent discovery, multi-hub ATP routing, and Commitment Critic sign-off.
-              </p>
+        {/* Right Chart: Enhanced Weekly Autonomous Revenue Protected */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-white border border-ivory-300 shadow-enterprise flex flex-col justify-between">
+          <div>
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div>
+                <h3 className="text-base font-serif font-bold text-ink-900 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-berry-700" />
+                  <span>Autonomous Revenue Protected & Verified Commitments</span>
+                </h3>
+                <p className="text-xs text-ink-600 mt-0.5">
+                  GMV captured via AI buyer agent discovery, multi-hub ATP routing, and Commitment Critic sign-off.
+                </p>
+              </div>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-berry-50 text-berry-800 border border-berry-200 font-bold shrink-0">
+                $620.6K Weekly GMV
+              </span>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-berry-50 text-berry-700 border border-berry-200 font-semibold shrink-0">
-              $620.6K Weekly GMV
-            </span>
+
+            {/* Quick Executive Metric Chips */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-[#2D6A4F]/10 border border-[#2D6A4F]/20 text-center">
+                <div className="text-[10px] text-sage-800 font-semibold">Weekly GMV</div>
+                <div className="text-sm font-bold font-serif text-[#2D6A4F]">$620,600</div>
+              </div>
+              <div className="p-2 rounded-lg bg-ivory-50 border border-ivory-200 text-center">
+                <div className="text-[10px] text-ink-600 font-semibold">Orders Completed</div>
+                <div className="text-sm font-bold font-serif text-ink-900">1,613 orders</div>
+              </div>
+              <div className="p-2 rounded-lg bg-sage-50 border border-sage-200 text-center">
+                <div className="text-[10px] text-sage-800 font-semibold">Zero-Hallucination</div>
+                <div className="text-sm font-bold font-serif text-sage-800">100% Verified</div>
+              </div>
+            </div>
+
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={revenueTrendData}
+                  margin={{ top: 10, right: 15, left: 0, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient id="colorProtected" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2D6A4F" stopOpacity={0.28} />
+                      <stop offset="95%" stopColor="#2D6A4F" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#E6DFD3"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    stroke="#57534E"
+                    fontSize={11}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#57534E"
+                    fontSize={11}
+                    tickLine={false}
+                    tickFormatter={(val) => `$${Math.round(val / 1000)}k`}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 rounded-xl border border-ivory-300 shadow-lg text-xs space-y-1.5 min-w-[230px]">
+                            <div className="font-serif font-bold text-ink-900 border-b border-ivory-200 pb-1 flex items-center justify-between">
+                              <span>{data.day} Telemetry</span>
+                              <span className="text-[10px] font-bold text-sage-800 bg-sage-50 px-2 py-0.5 rounded-full border border-sage-200">
+                                {data.orders} Orders
+                              </span>
+                            </div>
+                            <div className="space-y-1 text-[11px] pt-0.5">
+                              <div className="flex justify-between items-center">
+                                <span className="text-ink-500">Autonomous Protected:</span>
+                                <span className="font-bold text-[#2D6A4F]">${data.protected.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-ink-500">Legacy Unassisted:</span>
+                                <span className="font-semibold text-ink-600">${data.baseline.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-sage-800 font-bold pt-1 border-t border-ivory-100">
+                                <span>Protected Margin Lift:</span>
+                                <span>+${(data.protected - data.baseline).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="baseline"
+                    name="Legacy Unassisted Checkout"
+                    stroke="#A8A29E"
+                    fill="#E7E5E4"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="protected"
+                    name="VITRINE Autonomous Commerce"
+                    stroke="#2D6A4F"
+                    fillOpacity={1}
+                    fill="url(#colorProtected)"
+                    strokeWidth={2.5}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={revenueTrendData}
-                margin={{ top: 10, right: 15, left: 0, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient id="colorProtected" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2D6A4F" stopOpacity={0.28} />
-                    <stop offset="95%" stopColor="#2D6A4F" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#E6DFD3"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="day"
-                  stroke="#57534E"
-                  fontSize={11}
-                  tickLine={false}
-                />
-                <YAxis
-                  stroke="#57534E"
-                  fontSize={11}
-                  tickLine={false}
-                  tickFormatter={(val) => `$${Math.round(val / 1000)}k`}
-                />
-                <Tooltip
-                  formatter={(value: any) => [
-                    `$${Number(value).toLocaleString()}`,
-                    "",
-                  ]}
-                  contentStyle={{
-                    backgroundColor: "#FFFFFF",
-                    borderColor: "#E6DFD3",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="baseline"
-                  name="Legacy Unassisted Checkout"
-                  stroke="#A8A29E"
-                  fill="#E7E5E4"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="protected"
-                  name="VITRINE Autonomous Commerce"
-                  stroke="#2D6A4F"
-                  fillOpacity={1}
-                  fill="url(#colorProtected)"
-                  strokeWidth={2.5}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-ivory-200 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-600">
+          <div className="mt-3 pt-3 border-t border-ivory-200 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-600">
             <span>
               Primary Drivers:{" "}
               <strong className="text-ink-900">
-                Promise Intelligence Routing (42%) · Product Brain Discovery (38%) · Agent Substitutions (20%)
+                Promise Routing (42%) · Product Brain (38%) · Substitutions (20%)
               </strong>
             </span>
-            <span className="font-semibold text-sage-700">
+            <span className="font-bold text-sage-800">
               100% Critic Verified
             </span>
           </div>
         </div>
+      </div>
+
+      {/* SECTION 3: COLLAPSIBLE ACCORDION — HOW CAPABILITIES WORK TOGETHER (DEFAULT: COLLAPSED) */}
+      <div className="rounded-2xl bg-white border border-ivory-300 shadow-enterprise overflow-hidden transition-all">
+        <button
+          onClick={() => setArchitectureExpanded(!architectureExpanded)}
+          className="w-full p-5 sm:p-6 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-ivory-50/70 transition-colors cursor-pointer"
+        >
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sage-50 text-sage-700 border border-sage-200 flex items-center justify-center shrink-0">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sage-800 px-2 py-0.5 rounded-full bg-sage-50 border border-sage-200">
+                  System Architecture & Synergy
+                </span>
+                <span className="text-xs text-ink-500">6 Core Capabilities</span>
+              </div>
+              <h3 className="font-serif font-bold text-lg text-ink-900 mt-1">
+                How Product Brain, Promise Intelligence, Agent Commerce & Commitment Critic Work Together
+              </h3>
+              <p className="text-xs text-ink-600 mt-0.5">
+                End-to-end orchestration connecting category discoverability, ATP promise assurance, buyer agent negotiation, and audit proof.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <span className="text-xs font-semibold text-sage-800">
+              {architectureExpanded ? "Collapse Details" : "Expand 6 Capabilities"}
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-ivory-100 border border-ivory-300 flex items-center justify-center text-ink-700">
+              {architectureExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
+          </div>
+        </button>
+
+        {/* Accordion Body (Only rendered when expanded) */}
+        {architectureExpanded && (
+          <div className="p-6 pt-0 border-t border-ivory-200 animate-in fade-in duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+              {capabilityCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div
+                    key={card.step}
+                    onClick={() => navigateTo(card.tab, card.subSection)}
+                    className={`p-5 rounded-xl border ${card.accent} hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${card.badgeClass}`}
+                        >
+                          {card.step} · {card.capability}
+                        </span>
+                        <Icon className="w-4 h-4 text-ink-700" />
+                      </div>
+                      <h4 className="font-serif font-bold text-base text-ink-900">
+                        {card.title}
+                      </h4>
+                      <div className="text-xs font-semibold text-sage-800 mt-1">
+                        “{card.question}”
+                      </div>
+                      <p className="text-xs text-ink-600 mt-2 leading-relaxed">
+                        {card.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-ivory-300/80 flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-ink-800">
+                        {card.outcome}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-sage-700 group-hover:translate-x-0.5 transition-transform">
+                        <span>{card.cta}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SECTION 4: CAPABILITY & GOVERNANCE ALIGNMENT TABLE */}

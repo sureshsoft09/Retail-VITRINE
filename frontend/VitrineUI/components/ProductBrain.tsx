@@ -14,6 +14,7 @@ import {
   Award,
   BookOpen,
   Check,
+  X,
 } from "lucide-react";
 import { api } from "../api";
 import { Product } from "../types";
@@ -172,10 +173,19 @@ export const ProductBrain: React.FC = () => {
   const [selectedSku, setSelectedSku] = useState<string>(
     "SKU-4829-SILK-BLOUSE"
   );
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [enriching, setEnriching] = useState(false);
   const [searchQuery, setSearchQuery] = useState(
     "Ivory breathable silk top, Size M (21 in chest), verified care instructions"
   );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsDrawerOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -309,17 +319,17 @@ export const ProductBrain: React.FC = () => {
 
         {/* 4-STAGE VISUAL STORY: Before Enhancement -> Missing Attributes -> Enhanced Catalog -> Products Become Discoverable */}
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 mb-3">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-2">
             Catalog Discoverability Journey
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {storySteps.map((st, idx) => (
               <div
                 key={st.step}
                 onClick={() =>
                   st.step <= 2 ? setBrainMode("raw") : handleEnhanceCatalog()
                 }
-                className={`p-4 rounded-xl border transition-all cursor-pointer relative ${
+                className={`p-3 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between h-full ${
                   st.step >= 3 && isEnriched
                     ? "bg-sage-50/70 border-sage-300"
                     : st.step <= 2 && !isEnriched
@@ -327,30 +337,32 @@ export const ProductBrain: React.FC = () => {
                     : "bg-ivory-50 border-ivory-200"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
-                    Stage {st.step}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      st.step >= 3 && isEnriched
-                        ? "bg-sage-100 text-sage-800 border-sage-300"
-                        : st.step <= 2 && !isEnriched
-                        ? "bg-gold-100 text-gold-800 border-gold-300"
-                        : "bg-white text-ink-600 border-ivory-300"
-                    }`}
-                  >
-                    {st.metric}
-                  </span>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-ink-500">
+                      Stage {st.step}
+                    </span>
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                        st.step >= 3 && isEnriched
+                          ? "bg-sage-100 text-sage-800 border-sage-300"
+                          : st.step <= 2 && !isEnriched
+                          ? "bg-gold-100 text-gold-800 border-gold-300"
+                          : "bg-white text-ink-600 border-ivory-300"
+                      }`}
+                    >
+                      {st.metric}
+                    </span>
+                  </div>
+                  <div className="text-xs font-serif font-bold text-ink-900 leading-snug">
+                    {st.title}
+                  </div>
                 </div>
-                <div className="text-sm font-serif font-bold text-ink-900">
-                  {st.title}
-                </div>
-                <p className="text-xs text-ink-600 mt-1 leading-relaxed">
+                <p className="text-[11px] text-ink-600 mt-1 leading-snug">
                   {st.desc}
                 </p>
                 {idx < storySteps.length - 1 && (
-                  <ArrowRight className="hidden lg:block w-3.5 h-3.5 text-ink-400 absolute -right-2.5 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full" />
+                  <ArrowRight className="hidden lg:block w-3.5 h-3.5 text-ink-400 absolute -right-2.5 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full shadow-xs" />
                 )}
               </div>
             ))}
@@ -433,262 +445,461 @@ export const ProductBrain: React.FC = () => {
         </div>
       </div>
 
-      {/* BUYER SEARCH SIMULATION BAR: Shows 0 Results Before Enhancement vs 3 Discoverable Products After */}
+      {/* HIGHLIGHTED & PROMINENT: LIVE CUSTOMER & PERSONAL SHOPPER SEARCH TEST */}
       <div
-        className={`rounded-2xl border p-5 shadow-enterprise transition-all ${
+        className={`rounded-2xl border-2 p-5 sm:p-6 shadow-enterprise-md transition-all ${
           isEnriched
-            ? "bg-sage-50/40 border-sage-300"
-            : "bg-gold-50/50 border-gold-300"
+            ? "bg-gradient-to-br from-white via-sage-50/30 to-white border-sage-300"
+            : "bg-gradient-to-br from-white via-gold-50/40 to-white border-gold-300"
         }`}
       >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-600 mb-2">
-              <Search className="w-3.5 h-3.5 text-berry-700" />
-              <span>Live Customer & Personal Shopper Search Test</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ivory-200/80 pb-3.5 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-berry-50 text-berry-800 border border-berry-200 flex items-center justify-center shrink-0">
+              <Search className="w-4 h-4 text-berry-700" />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-berry-800 px-2 py-0.5 rounded-full bg-berry-50 border border-berry-200">
+                  Live Search Benchmark
+                </span>
+                <span className="text-xs text-ink-500 font-medium">Inbound Shopper & AI Agent Intent Simulator</span>
+              </div>
+              <h3 className="font-serif font-bold text-lg text-ink-900 mt-0.5">
+                Live Customer & Personal Shopper Search Test
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isEnriched ? (
+              <span className="px-3 py-1.5 rounded-full bg-sage-100 text-sage-800 border border-sage-300 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                <CheckCircle2 className="w-4 h-4 text-sage-600" />
+                <span>3 Verified Matches Found (100% Discoverable)</span>
+              </span>
+            ) : (
+              <span className="px-3 py-1.5 rounded-full bg-gold-100 text-gold-900 border border-gold-300 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                <AlertCircle className="w-4 h-4 text-gold-700" />
+                <span>0 Matches (Catalog Invisible to Agents)</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Search Input Bar + Action Button */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-ink-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-ivory-300 text-xs font-medium text-ink-900"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-ivory-300 text-xs font-medium text-ink-900 focus:outline-none focus:border-berry-500 shadow-xs"
+                placeholder="Enter shopper or agent query..."
               />
-              {!isEnriched ? (
-                <button
-                  onClick={handleEnhanceCatalog}
-                  className="px-4 py-2 rounded-xl bg-[#7B2D53] hover:bg-berry-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
-                >
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>Enhance Catalog to Make Products Discoverable</span>
-                </button>
-              ) : (
-                <span className="px-4 py-2 rounded-xl bg-sage-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>3 Matching Products Discoverable</span>
-                </span>
-              )}
             </div>
+            {!isEnriched ? (
+              <button
+                onClick={handleEnhanceCatalog}
+                className="px-5 py-2.5 rounded-xl bg-[#7B2D53] hover:bg-berry-800 text-white text-xs font-bold flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-md transition-all hover:scale-[1.01]"
+              >
+                <Wand2 className="w-4 h-4" />
+                <span>Enhance Catalog to Make Products Discoverable</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setBrainMode("raw")}
+                className="px-4 py-2.5 rounded-xl bg-ivory-100 hover:bg-ivory-200 text-ink-800 border border-ivory-300 text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-all"
+              >
+                <EyeOff className="w-3.5 h-3.5 text-gold-700" />
+                <span>Simulate Raw Feed Failure</span>
+              </button>
+            )}
           </div>
 
-          <div className="lg:w-80 p-3.5 rounded-xl bg-white border border-ivory-300">
-            <div className="text-[11px] font-bold text-ink-900">
-              Search Outcome:{" "}
-              {isEnriched ? (
-                <span className="text-sage-700">
-                  3 Verified Matches Returned
+          {/* Quick Presets Strip */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-[11px] font-semibold text-ink-500 mr-1">Try Queries:</span>
+            {[
+              "Ivory breathable silk top, Size M (21 in chest), verified care instructions",
+              "100% Grade-6A Mulberry Silk 19 Momme, Executive style",
+              "Relaxed Normandy Linen-Silk shirt, Size M, cold wash",
+            ].map((q) => (
+              <button
+                key={q}
+                onClick={() => setSearchQuery(q)}
+                className={`text-[11px] px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                  searchQuery === q
+                    ? "bg-berry-50 text-berry-900 border-berry-300 font-bold"
+                    : "bg-white hover:bg-ivory-100 text-ink-700 border-ivory-300"
+                }`}
+              >
+                "{q.slice(0, 38)}..."
+              </button>
+            ))}
+          </div>
+
+          {/* Diagnostic Outcome Strip */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div className="p-3.5 rounded-xl bg-white border border-ivory-200 text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                Buyer Intent Query Parsing
+              </span>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                <span className="px-2 py-0.5 rounded-md bg-ivory-100 border border-ivory-300 text-[11px] font-medium text-ink-800">
+                  Target Color: <strong>Ivory</strong>
                 </span>
-              ) : (
-                <span className="text-clay-700">
-                  0 Matches (Products Invisible)
+                <span className="px-2 py-0.5 rounded-md bg-ivory-100 border border-ivory-300 text-[11px] font-medium text-ink-800">
+                  Target Size: <strong>M (21 in Chest)</strong>
                 </span>
-              )}
+                <span className="px-2 py-0.5 rounded-md bg-ivory-100 border border-ivory-300 text-[11px] font-medium text-ink-800">
+                  Composition: <strong>100% Mulberry Silk</strong>
+                </span>
+              </div>
             </div>
-            <p className="text-[11px] text-ink-600 mt-1 leading-snug">
-              {isEnriched
-                ? "Because chest width (21.0 in), 100% Mulberry Silk weight, and dry-clean instructions are enriched, all 3 silk tops appear in buyer results."
-                : "Before enhancement, the catalog lacks chest measurements, silk grade, and care instructions—so high-intent buyers cannot find these products."}
-            </p>
+
+            <div
+              className={`p-3.5 rounded-xl border text-xs ${
+                isEnriched
+                  ? "bg-sage-50/60 border-sage-300 text-sage-950"
+                  : "bg-gold-50/60 border-gold-300 text-gold-950"
+              }`}
+            >
+              <div className="font-bold flex items-center justify-between">
+                <span>Discoverability Diagnostic:</span>
+                <span className={isEnriched ? "text-sage-800" : "text-clay-800"}>
+                  {isEnriched ? "100% Match Ratio" : "0% Match Ratio (Rejected)"}
+                </span>
+              </div>
+              <p className="text-[11px] text-ink-700 mt-1 leading-snug">
+                {isEnriched
+                  ? "Product Brain indexed chest width (21.0 in), 100% Mulberry Silk (19 Momme), and dry-clean guidelines. All 3 silk tops are ranked and discoverable by AI buyer agents."
+                  : "Raw supplier feed is missing chest measurements, silk momme grade, and care instructions. Inbound buyer agents reject these products and abandon the cart."}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* CATALOG EXPLORER: BEFORE ENHANCEMENT vs ENHANCED CATALOG */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 4 Cols: Product Catalog List */}
-        <div className="lg:col-span-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif font-bold text-lg text-ink-900">
-              Silk & Linen Collection
+      {/* CATALOG DIRECTORY: FULL-WIDTH LUXURY COLLECTION WITH SLIDE-OVER DRAWER INSPECTION */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-berry-800 px-2.5 py-0.5 rounded-full bg-berry-50 border border-berry-200">
+                Merchandise Intelligence Directory
+              </span>
+              <span className="text-xs font-semibold text-ink-500">
+                {products.length} Styles Active
+              </span>
+            </div>
+            <h3 className="font-serif font-bold text-xl text-ink-900 mt-1">
+              Silk & Linen Collection Catalog
             </h3>
-            <span className="text-xs text-ink-500 font-medium">
-              Select style to inspect
-            </span>
+            <p className="text-xs text-ink-600 mt-0.5">
+              Full-width luxury merchandise directory. Select any style to inspect its deep attribute readiness and configure AI buyer discoverability specifications.
+            </p>
           </div>
 
+          <div className="flex items-center gap-2 shrink-0">
+            {!isEnriched ? (
+              <button
+                onClick={handleEnhanceCatalog}
+                disabled={enriching}
+                className="px-4 py-2 rounded-xl bg-[#7B2D53] hover:bg-berry-800 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{enriching ? "Enriching Collection..." : "Enrich All Missing Attributes"}</span>
+              </button>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sage-50 text-sage-800 border border-sage-200 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 text-sage-600" />
+                <span>All 3 Styles Discoverable</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Full-Width 3-Column Luxury Product Card Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {products.map((prod) => {
             const isSelected = prod.sku === activeProduct.sku;
             return (
               <div
                 key={prod.sku}
-                onClick={() => setSelectedSku(prod.sku)}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-[#1C1917] text-white border-[#1C1917] shadow-md"
-                    : "bg-white hover:bg-ivory-50 text-ink-900 border-ivory-300"
-                }`}
+                className="bg-white rounded-2xl border border-ivory-300 p-5 shadow-enterprise flex flex-col justify-between hover:shadow-enterprise-md hover:border-ivory-400 transition-all group"
               >
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      isSelected
-                        ? "bg-white/15 text-white border-white/20"
-                        : isEnriched
-                        ? "bg-sage-50 text-sage-800 border-sage-200"
-                        : "bg-gold-50 text-gold-800 border-gold-200"
-                    }`}
-                  >
-                    {isEnriched ? "✓ Discoverable (92%)" : "⚠ Incomplete (41%)"}
-                  </span>
-                  <span
-                    className={`text-sm font-serif font-bold ${
-                      isSelected ? "text-[#F6C867]" : "text-ink-900"
-                    }`}
-                  >
-                    ${prod.price.toFixed(2)}
-                  </span>
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        isEnriched
+                          ? "bg-sage-50 text-sage-800 border-sage-200"
+                          : "bg-gold-50 text-gold-800 border-gold-200"
+                      }`}
+                    >
+                      {isEnriched ? "✓ Discoverable (92%)" : "⚠ Incomplete Feed (41%)"}
+                    </span>
+                    <span className="text-base font-serif font-bold text-ink-900">
+                      ${prod.price.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <h4 className="font-serif font-bold text-base text-ink-900 leading-snug group-hover:text-berry-800 transition-colors">
+                    {prod.title}
+                  </h4>
+                  <div className="text-[11px] text-ink-500 mt-1">
+                    Style Ref: <strong className="text-ink-700">{prod.sku}</strong> · {prod.category}
+                  </div>
+                  <p className="text-xs text-ink-600 mt-2 line-clamp-2 leading-relaxed">
+                    {prod.description}
+                  </p>
+
+                  {/* Key Attribute Preview Rows */}
+                  <div className="mt-4 pt-3 border-t border-ivory-200/80 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-ink-500">Fabric Composition:</span>
+                      <span className="font-semibold text-ink-800">
+                        {isEnriched
+                          ? prod.enriched_attributes?.fabric_composition?.value || "100% Mulberry Silk"
+                          : prod.raw_attributes?.color ? `${prod.raw_attributes.color} Silk` : "Basic Silk"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-ink-500">Sizing Intelligence:</span>
+                      <span className="font-semibold text-ink-800">
+                        {isEnriched
+                          ? prod.enriched_attributes?.size_m_chest_width?.value || "21.0 in (True to Size)"
+                          : prod.raw_attributes?.size_available || "S, M, L (Unmeasured)"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-ink-500">Garment Care:</span>
+                      <span className="font-semibold text-ink-800">
+                        {isEnriched ? "Dry Clean Verified" : "Unverified in Feed"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="font-serif font-bold text-sm leading-snug">
-                  {prod.title}
-                </div>
-                <div
-                  className={`text-[11px] mt-1 ${
-                    isSelected ? "text-ivory-300" : "text-ink-500"
-                  }`}
-                >
-                  Style Ref: {prod.sku} · {prod.category}
+
+                {/* Primary Action Button: Open Slide-Over Drawer */}
+                <div className="mt-5 pt-3 border-t border-ivory-200">
+                  <button
+                    onClick={() => {
+                      setSelectedSku(prod.sku);
+                      setIsDrawerOpen(true);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Inspect Specifications & Attributes</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
+      </div>
 
-        {/* Right 8 Cols: Side-by-Side Before vs After Attribute Readiness */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-ivory-300 p-6 shadow-enterprise space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ivory-200 pb-4">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-berry-700">
-                Style Attribute Inspection · {activeProduct.sku}
-              </span>
-              <h3 className="font-serif font-bold text-xl text-ink-900 mt-0.5">
-                {activeProduct.title}
-              </h3>
-              <p className="text-xs text-ink-600 mt-0.5">
-                {activeProduct.description}
-              </p>
-            </div>
-            <div className="shrink-0">
-              {!isEnriched ? (
-                <button
-                  onClick={handleEnhanceCatalog}
-                  className="px-4 py-2 rounded-xl bg-[#7B2D53] hover:bg-berry-800 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Enrich Missing Attributes</span>
-                </button>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sage-50 text-sage-800 border border-sage-200 text-xs font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-sage-600" />
-                  <span>Ready for Customer & Agent Discovery</span>
-                </span>
-              )}
-            </div>
-          </div>
+      {/* RESPONSIVE SPECIFICATION INSPECTOR MODAL */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto">
+          {/* Backdrop with click-to-close */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsDrawerOpen(false)}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Left Column: Before Enhancement (Raw Supplier Feed) */}
-            <div className="rounded-xl border border-ivory-300 bg-ivory-50/70 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-ink-800 flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 text-gold-600" />
-                  <span>Before Enhancement (Basic Feed)</span>
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gold-100 text-gold-800 border border-gold-300">
-                  41% Complete
-                </span>
+          {/* Responsive Modal Container - Auto-compacts to content height */}
+          <div className="relative w-full max-w-2xl lg:max-w-4xl my-auto max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-ivory-300 flex flex-col z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header - Compact */}
+            <div className="px-5 py-3.5 border-b border-ivory-200 flex items-start justify-between bg-ivory-50/60 shrink-0">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-berry-800 px-2 py-0.5 rounded-full bg-berry-100 border border-berry-300">
+                    Product Brain · Specification Inspector
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      isEnriched
+                        ? "bg-sage-50 text-sage-800 border-sage-200"
+                        : "bg-gold-50 text-gold-800 border-gold-200"
+                    }`}
+                  >
+                    {isEnriched ? "✓ 92% Agent Discoverable" : "⚠ 41% Incomplete"}
+                  </span>
+                </div>
+                <h3 className="font-serif font-bold text-lg text-ink-900">
+                  {activeProduct.title}
+                </h3>
+                <p className="text-[11px] text-ink-600">
+                  Style SKU: <strong className="text-ink-800">{activeProduct.sku}</strong> · ${activeProduct.price.toFixed(2)} · {activeProduct.category}
+                </p>
               </div>
 
-              <div className="space-y-2 text-xs">
-                {Object.entries(activeProduct.raw_attributes).map(
-                  ([key, val]) => (
-                    <div
-                      key={key}
-                      className="p-2.5 rounded-lg bg-white border border-ivory-200 flex justify-between"
-                    >
-                      <span className="text-ink-500 capitalize">
-                        {key.replace(/_/g, " ")}:
-                      </span>
-                      <span className="font-semibold text-ink-900">{val}</span>
-                    </div>
-                  )
-                )}
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-ivory-200 text-ink-600 hover:text-ink-900 transition-colors cursor-pointer"
+                title="Close drawer (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-                {/* Highlight Missing Attributes */}
-                <div className="pt-2 space-y-1.5">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-clay-700">
-                    Missing Critical Buyer Attributes:
+            {/* Drawer Body: Compact Comparison */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+              {/* Enrichment Action Banner */}
+              <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <div className="text-xs font-bold text-ink-900">
+                    {isEnriched ? "Agent Discoverability Active" : "Incomplete Supplier Feed"}
                   </div>
-                  {[
-                    "Exact Fabric Composition & Silk Momme Weight",
-                    "Size M Chest & Garment Measurements",
-                    "Verified Care & Cleaning Instructions",
-                    "Mill Origin & Sustainability Certification",
-                  ].map((missing) => (
-                    <div
-                      key={missing}
-                      className="p-2 rounded-lg bg-clay-50/70 border border-clay-200 text-clay-800 text-[11px] flex items-center gap-1.5 font-medium"
-                    >
-                      <span>✕ Missing: {missing}</span>
+                  <div className="text-[11px] text-ink-600">
+                    {isEnriched
+                      ? "All required buyer agent specifications are validated and indexed for autonomous AI discovery."
+                      : "AI Buyer agents cannot match this product due to missing garment measurements and care labels."}
+                  </div>
+                </div>
+                {!isEnriched ? (
+                  <button
+                    onClick={handleEnhanceCatalog}
+                    disabled={enriching}
+                    className="px-3 py-1.5 rounded-lg bg-[#7B2D53] hover:bg-berry-800 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{enriching ? "Enriching..." : "Enrich Missing Specs"}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setBrainMode("raw")}
+                    className="px-2.5 py-1 rounded-lg bg-ivory-200 hover:bg-ivory-300 text-ink-700 text-xs font-semibold cursor-pointer shrink-0"
+                  >
+                    View Raw Feed
+                  </button>
+                )}
+              </div>
+
+              {/* Side-by-Side Raw vs Enriched Specifications */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {/* Left: Raw Feed */}
+                <div className="rounded-xl border border-ivory-300 bg-ivory-50/70 p-3 space-y-2.5">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-ivory-200">
+                    <span className="text-xs font-bold text-ink-800 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-gold-600" />
+                      <span>Raw Supplier Feed</span>
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gold-100 text-gold-800 border border-gold-300">
+                      41% Complete
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs">
+                    {Object.entries(activeProduct.raw_attributes).map(([key, val]) => (
+                      <div
+                        key={key}
+                        className="p-2 rounded-lg bg-white border border-ivory-200 flex justify-between text-[11px]"
+                      >
+                        <span className="text-ink-500 capitalize">
+                          {key.replace(/_/g, " ")}:
+                        </span>
+                        <span className="font-semibold text-ink-900">{val}</span>
+                      </div>
+                    ))}
+
+                    {/* Missing Attributes */}
+                    <div className="pt-1.5 space-y-1">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-clay-700">
+                        Missing Critical Buyer Attributes:
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {[
+                          "Fabric & Momme Weight",
+                          "Chest & Length Specs",
+                          "Verified Care Label",
+                          "Mill Certification",
+                        ].map((missing) => (
+                          <div
+                            key={missing}
+                            className="p-1.5 rounded-md bg-clay-50 border border-clay-200 text-clay-800 text-[10px] flex items-center gap-1 font-medium"
+                          >
+                            <span>✕ {missing}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+                {/* Right: Enriched Attributes */}
+                <div
+                  className={`rounded-xl border p-3 space-y-2.5 transition-all ${
+                    isEnriched
+                      ? "border-berry-300 bg-berry-50/20"
+                      : "border-dashed border-ivory-300 bg-ivory-50/40 opacity-85"
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-1.5 border-b border-ivory-200">
+                    <span className="text-xs font-bold text-ink-900 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-berry-700" />
+                      <span>Product Brain Specifications</span>
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sage-100 text-sage-800 border border-sage-300">
+                      92% Complete
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {Object.entries(activeProduct.enriched_attributes).map(
+                      ([key, attr]) => (
+                        <div
+                          key={key}
+                          className="p-2 rounded-lg bg-white border border-ivory-200 shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] font-bold text-ink-700 capitalize truncate">
+                              {key.replace(/_/g, " ")}
+                            </span>
+                            <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-ivory-100 text-ink-600 border border-ivory-200">
+                              {attr.provenance}
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-bold text-ink-900 mt-0.5">
+                            {attr.value}
+                          </div>
+                          <div className="flex items-center justify-between mt-1 text-[9px] text-ink-500">
+                            <span className="text-sage-700 font-semibold">
+                              ✓ {Math.round(attr.confidence * 100)}% Quality
+                            </span>
+                            {attr.regulated && (
+                              <span className="text-berry-700 font-semibold">
+                                Regulated
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Enhanced Catalog Attributes */}
-            <div
-              className={`rounded-xl border p-4 space-y-3 transition-all ${
-                isEnriched
-                  ? "border-berry-300 bg-berry-50/25"
-                  : "border-dashed border-ivory-300 bg-ivory-50/40 opacity-85"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-ink-900 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-berry-700" />
-                  <span>Enhanced Catalog Specifications</span>
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sage-100 text-sage-800 border border-sage-300">
-                  92% Complete
-                </span>
-              </div>
-
-              <div className="space-y-2.5 text-xs">
-                {Object.entries(activeProduct.enriched_attributes).map(
-                  ([key, attr]) => (
-                    <div
-                      key={key}
-                      className="p-3 rounded-lg bg-white border border-ivory-200 shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-bold text-ink-700 capitalize">
-                          {key.replace(/_/g, " ")}
-                        </span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-ivory-100 text-ink-700 border border-ivory-300">
-                          Source: {attr.provenance}
-                        </span>
-                      </div>
-                      <div className="text-xs font-bold text-ink-900 mt-1">
-                        {attr.value}
-                      </div>
-                      <div className="flex items-center justify-between mt-1.5 text-[10px] text-ink-500">
-                        <span className="text-sage-700 font-semibold">
-                          ✓ Verified ({Math.round(attr.confidence * 100)}% Quality Score)
-                        </span>
-                        {attr.regulated && (
-                          <span className="text-berry-700 font-semibold">
-                            Compliance Verified
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
+            {/* Drawer Footer - Compact */}
+            <div className="px-5 py-3 border-t border-ivory-200 bg-ivory-50 flex items-center justify-between">
+              <span className="text-xs text-ink-500">
+                Press <kbd className="px-1.5 py-0.5 bg-white border border-ivory-300 rounded text-[10px]">Esc</kbd> or click outside to close
+              </span>
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="px-4 py-1.5 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

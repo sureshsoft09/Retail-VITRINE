@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sliders,
   ShieldCheck,
@@ -13,6 +13,8 @@ import {
   Save,
   Award,
   Lock,
+  X,
+  ArrowRight,
 } from "lucide-react";
 import { api } from "../api";
 import { useVitrineStore } from "../store";
@@ -38,6 +40,15 @@ export const GovernanceConsole: React.FC<GovernanceConsoleProps> = ({
 
   const [saving, setSaving] = useState(false);
   const [savedBanner, setSavedBanner] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsDrawerOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleSaveCommercialRules = async () => {
     setSaving(true);
@@ -158,67 +169,67 @@ export const GovernanceConsole: React.FC<GovernanceConsoleProps> = ({
         </div>
 
         {/* THE 5 REQUIRED COMMERCIAL RULES PILLARS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 flex flex-col justify-between h-full">
             <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
               1. Discount Limits
             </div>
-            <div className="text-xl font-serif font-bold text-ink-900 mt-1">
+            <div className="text-lg font-serif font-bold text-ink-900 mt-1">
               Up to {discountCapPct}% Off
             </div>
-            <div className="text-[11px] text-ink-600 mt-0.5">
+            <div className="text-[11px] text-ink-600 mt-0.5 leading-snug">
               Max promotional discount
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200">
+          <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 flex flex-col justify-between h-full">
             <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
               2. Approval Thresholds
             </div>
-            <div className="text-xl font-serif font-bold text-ink-900 mt-1">
+            <div className="text-lg font-serif font-bold text-ink-900 mt-1">
               ${maxOrderUSD} Auto-Limit
             </div>
-            <div className="text-[11px] text-ink-600 mt-0.5">
+            <div className="text-[11px] text-ink-600 mt-0.5 leading-snug">
               Larger orders go to manager
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200">
+          <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 flex flex-col justify-between h-full">
             <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
               3. Margin Protection
             </div>
-            <div className="text-xl font-serif font-bold text-sage-700 mt-1">
+            <div className="text-lg font-serif font-bold text-sage-700 mt-1">
               {marginFloorPct}% Min Floor
             </div>
-            <div className="text-[11px] text-ink-600 mt-0.5">
+            <div className="text-[11px] text-ink-600 mt-0.5 leading-snug">
               Net profit after shipping
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200">
+          <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 flex flex-col justify-between h-full">
             <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
               4. Order Value Policies
             </div>
-            <div className="text-xl font-serif font-bold text-ink-900 mt-1">
+            <div className="text-lg font-serif font-bold text-ink-900 mt-1">
               Tiered Sign-Off
             </div>
-            <div className="text-[11px] text-ink-600 mt-0.5">
+            <div className="text-[11px] text-ink-600 mt-0.5 leading-snug">
               Retail vs. wholesale rules
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200 col-span-2 sm:col-span-1">
+          <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 flex flex-col justify-between h-full col-span-2 sm:col-span-1">
             <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
               5. Emergency Controls
             </div>
             <div
-              className={`text-xl font-serif font-bold mt-1 ${
+              className={`text-lg font-serif font-bold mt-1 ${
                 killSwitchActive ? "text-clay-700" : "text-sage-700"
               }`}
             >
               {killSwitchActive ? "Approvals Paused" : "Auto-Active"}
             </div>
-            <div className="text-[11px] text-ink-600 mt-0.5">
+            <div className="text-[11px] text-ink-600 mt-0.5 leading-snug">
               Instant manual hold switch
             </div>
           </div>
@@ -240,193 +251,208 @@ export const GovernanceConsole: React.FC<GovernanceConsoleProps> = ({
         )}
       </div>
 
-      {/* SECTION 2: COMMERCIAL POLICY CONTROLS & EMERGENCY PAUSE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 7 Cols: Interactive Commercial Rule Sliders */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-ivory-300 p-6 shadow-enterprise space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ivory-200 pb-4">
+      {/* SECTION 2: COMMERCIAL POLICY MATRIX & EMERGENCY CONTROLS (FULL-WIDTH + SLIDE-OVER DRAWER) */}
+      <div className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gold-800 px-2.5 py-0.5 rounded-full bg-gold-50 border border-gold-200">
+                Live Guardrail Engine · Autonomy Bounds
+              </span>
+              <span className="text-xs font-semibold text-ink-500">
+                3 Autonomous Policies Enforced
+              </span>
+            </div>
+            <h3 className="font-serif font-bold text-xl text-ink-900 mt-1">
+              Commercial Guardrails & Policy Matrix
+            </h3>
+            <p className="text-xs text-ink-600 mt-0.5">
+              Full-width commercial policy controls. Review real-time limits, emergency kill-switches, and open the slide-over console to adjust parameters.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#2D6A4F] hover:bg-[#1E4D38] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Configure Guardrails & Test Simulation</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Full-Width 3-Column Policy Matrix Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: Promotional Discount Limit */}
+          <div className="bg-white rounded-2xl border border-ivory-300 p-5 shadow-enterprise flex flex-col justify-between hover:shadow-enterprise-md hover:border-ivory-400 transition-all group">
             <div>
-              <h3 className="font-serif font-bold text-lg text-ink-900">
-                Commercial Policy Controls
-              </h3>
-              <p className="text-xs text-ink-600">
-                Changes made here immediately govern Order Operations and Fulfillment validation.
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-berry-50 border border-berry-200 flex items-center justify-center text-berry-700">
+                  <Percent className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-berry-50 text-berry-800 border border-berry-200">
+                  Active Guardrail
+                </span>
+              </div>
+
+              <div className="text-[10px] uppercase font-bold tracking-wider text-ink-500">
+                1. Discount Ceiling
+              </div>
+              <h4 className="font-serif font-bold text-2xl text-ink-900 mt-0.5 group-hover:text-berry-800 transition-colors">
+                {discountCapPct}% Max Markdown
+              </h4>
+              <p className="text-xs text-ink-600 mt-2 leading-relaxed">
+                Maximum promotional allowance AI buyer agents and cart coupons can receive without human commercial approval.
               </p>
+
+              <div className="mt-4 pt-3 border-t border-ivory-200/80 flex items-center justify-between text-[11px] text-ink-500">
+                <span>Range: 0% - 40%</span>
+                <span className="font-semibold text-ink-700">Recommended: 15%</span>
+              </div>
             </div>
 
-            {/* Quick Merchandising Presets */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="mt-5 pt-3 border-t border-ivory-200">
               <button
-                onClick={() =>
-                  applyPreset("Standard Luxury Retail", {
-                    maxOrderUSD: 250,
-                    discountCapPct: 15,
-                    marginFloorPct: 18,
-                  })
-                }
-                className="px-2.5 py-1 rounded-lg bg-ivory-100 hover:bg-ivory-200 text-ink-800 border border-ivory-300 text-[11px] font-semibold cursor-pointer"
+                onClick={() => setIsDrawerOpen(true)}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                Standard Luxury
-              </button>
-              <button
-                onClick={() =>
-                  applyPreset("VIP Private Sale", {
-                    maxOrderUSD: 500,
-                    discountCapPct: 25,
-                    marginFloorPct: 14,
-                  })
-                }
-                className="px-2.5 py-1 rounded-lg bg-berry-50 hover:bg-berry-100 text-berry-800 border border-berry-200 text-[11px] font-semibold cursor-pointer"
-              >
-                VIP Private Sale
-              </button>
-              <button
-                onClick={() =>
-                  applyPreset("Strict Margin Protection", {
-                    maxOrderUSD: 175,
-                    discountCapPct: 5,
-                    marginFloorPct: 28,
-                  })
-                }
-                className="px-2.5 py-1 rounded-lg bg-sage-50 hover:bg-sage-100 text-sage-800 border border-sage-200 text-[11px] font-semibold cursor-pointer"
-              >
-                Strict Margin
+                <span>Adjust Discount Limit</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* 1. Discount Limits Slider */}
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Percent className="w-4 h-4 text-berry-700" />
-                <div>
-                  <div className="text-sm font-bold text-ink-900">
-                    1. Promotional & Loyalty Discount Limit
-                  </div>
-                  <div className="text-xs text-ink-600">
-                    Maximum discount percentage that can be granted without Commercial Manager approval.
-                  </div>
+          {/* Card 2: Profit Margin Floor */}
+          <div className="bg-white rounded-2xl border border-ivory-300 p-5 shadow-enterprise flex flex-col justify-between hover:shadow-enterprise-md hover:border-ivory-400 transition-all group">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-sage-50 border border-sage-200 flex items-center justify-center text-sage-700">
+                  <TrendingUp className="w-4 h-4" />
                 </div>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sage-50 text-sage-800 border border-sage-200">
+                  Strict Margin Floor
+                </span>
               </div>
-              <span className="px-3 py-1 rounded-xl bg-white border border-ivory-300 font-serif font-bold text-lg text-ink-900">
-                {discountCapPct}%
-              </span>
+
+              <div className="text-[10px] uppercase font-bold tracking-wider text-ink-500">
+                2. Profit Protection
+              </div>
+              <h4 className="font-serif font-bold text-2xl text-sage-700 mt-0.5 group-hover:text-sage-800 transition-colors">
+                {marginFloorPct}% Net Profit Floor
+              </h4>
+              <p className="text-xs text-ink-600 mt-2 leading-relaxed">
+                Guaranteed net margin floor after deducting production COGS, promotional discounts, and express fulfillment freight.
+              </p>
+
+              <div className="mt-4 pt-3 border-t border-ivory-200/80 flex items-center justify-between text-[11px] text-ink-500">
+                <span>Range: 5% - 65%</span>
+                <span className="font-semibold text-sage-700">Recommended: 18%</span>
+              </div>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={40}
-              step={1}
-              value={discountCapPct}
-              onChange={(e) => setDiscountCapPct(Number(e.target.value))}
-              className="w-full accent-[#2D6A4F]"
-            />
-            <div className="flex justify-between text-[11px] text-ink-500">
-              <span>0% (No Discounts)</span>
-              <span>Recommended: 15% Max</span>
-              <span>40% (Clearance Cap)</span>
+
+            <div className="mt-5 pt-3 border-t border-ivory-200">
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Adjust Margin Floor</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* 2. Margin Protection Slider */}
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-sage-700" />
-                <div>
-                  <div className="text-sm font-bold text-ink-900">
-                    2. Minimum Profit Margin Floor
-                  </div>
-                  <div className="text-xs text-ink-600">
-                    Minimum required net margin after product cost, discount, and express carrier shipping.
-                  </div>
+          {/* Card 3: Automated Order Approval Threshold */}
+          <div className="bg-white rounded-2xl border border-ivory-300 p-5 shadow-enterprise flex flex-col justify-between hover:shadow-enterprise-md hover:border-ivory-400 transition-all group">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-gold-50 border border-gold-200 flex items-center justify-center text-gold-700">
+                  <DollarSign className="w-4 h-4" />
                 </div>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gold-50 text-gold-800 border border-gold-200">
+                  Value Governance
+                </span>
               </div>
-              <span className="px-3 py-1 rounded-xl bg-white border border-ivory-300 font-serif font-bold text-lg text-sage-700">
-                {marginFloorPct}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min={5}
-              max={65}
-              step={1}
-              value={marginFloorPct}
-              onChange={(e) => setMarginFloorPct(Number(e.target.value))}
-              className="w-full accent-[#2D6A4F]"
-            />
-            <div className="flex justify-between text-[11px] text-ink-500">
-              <span>5% Floor</span>
-              <span>Recommended: 18% Floor</span>
-              <span>65% High-Margin Only</span>
-            </div>
-          </div>
 
-          {/* 3. Approval Threshold / Max Order Value Slider */}
-          <div className="p-4 rounded-xl bg-ivory-50 border border-ivory-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-gold-700" />
-                <div>
-                  <div className="text-sm font-bold text-ink-900">
-                    3. Automated Order Approval Threshold
-                  </div>
-                  <div className="text-xs text-ink-600">
-                    Orders above this dollar amount are held for Commercial Manager review.
-                  </div>
-                </div>
+              <div className="text-[10px] uppercase font-bold tracking-wider text-ink-500">
+                3. Order Value Cap
               </div>
-              <span className="px-3 py-1 rounded-xl bg-white border border-ivory-300 font-serif font-bold text-lg text-ink-900">
-                ${maxOrderUSD}
-              </span>
+              <h4 className="font-serif font-bold text-2xl text-ink-900 mt-0.5 group-hover:text-gold-800 transition-colors">
+                ${maxOrderUSD} Auto-Approval Cap
+              </h4>
+              <p className="text-xs text-ink-600 mt-2 leading-relaxed">
+                Orders up to this subtotal auto-clear. Orders exceeding this amount are held for Category Manager review.
+              </p>
+
+              <div className="mt-4 pt-3 border-t border-ivory-200/80 flex items-center justify-between text-[11px] text-ink-500">
+                <span>Range: $100 - $1,000</span>
+                <span className="font-semibold text-ink-700">Recommended: $250</span>
+              </div>
             </div>
-            <input
-              type="range"
-              min={100}
-              max={1000}
-              step={25}
-              value={maxOrderUSD}
-              onChange={(e) => setMaxOrderUSD(Number(e.target.value))}
-              className="w-full accent-[#2D6A4F]"
-            />
-            <div className="flex justify-between text-[11px] text-ink-500">
-              <span>$100 Limit</span>
-              <span>Recommended: $250 Limit</span>
-              <span>$1,000 VIP Limit</span>
+
+            <div className="mt-5 pt-3 border-t border-ivory-200">
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Adjust Value Threshold</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Right 5 Cols: Emergency Controls & Live Policy Impact Preview */}
-        <div className="lg:col-span-5 space-y-5">
-          {/* Emergency Controls Card */}
-          <div
-            className={`p-6 rounded-2xl border shadow-enterprise transition-all space-y-4 ${
-              killSwitchActive
-                ? "bg-clay-50 border-clay-400"
-                : "bg-white border-ivory-300"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-clay-100 text-clay-800 border border-clay-300">
-                  Emergency Store Control
-                </span>
-                <h3 className="font-serif font-bold text-lg text-ink-900 mt-1.5">
-                  {killSwitchActive
-                    ? "Automated Order Approvals Paused"
-                    : "Manual Review Hold Control"}
-                </h3>
-                <p className="text-xs text-ink-600 mt-1 leading-relaxed">
-                  Instantly pause all automated order approvals across the storefront. When active, every incoming customer order is held for manual Commercial Manager release.
-                </p>
-              </div>
+        {/* Full-Width Emergency Kill-Switch & Active Policy Status Banner */}
+        <div
+          className={`p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-enterprise ${
+            killSwitchActive
+              ? "bg-clay-50 border-clay-300"
+              : "bg-sage-50/60 border-sage-200"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                killSwitchActive
+                  ? "bg-clay-100 text-clay-700 border border-clay-300"
+                  : "bg-sage-100 text-sage-700 border border-sage-300"
+              }`}
+            >
+              {killSwitchActive ? (
+                <PauseCircle className="w-5 h-5" />
+              ) : (
+                <PlayCircle className="w-5 h-5" />
+              )}
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    killSwitchActive
+                      ? "bg-clay-200 text-clay-900 border-clay-300"
+                      : "bg-sage-200 text-sage-900 border-sage-300"
+                  }`}
+                >
+                  {killSwitchActive ? "Emergency Mode Active" : "Autonomous Mode Running"}
+                </span>
+                <span className="text-xs font-semibold text-ink-700">
+                  {killSwitchActive
+                    ? "All automated orders paused"
+                    : "Orders evaluated against active commercial bounds"}
+                </span>
+              </div>
+              <p className="text-xs text-ink-600 mt-1">
+                {killSwitchActive
+                  ? "Every incoming customer order is held in quarantine for manual release."
+                  : "Autonomous agent transactions proceed automatically when within discount, margin, and value limits."}
+              </p>
+            </div>
+          </div>
 
+          <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={handleToggleEmergencyPause}
-              className={`w-full py-3 px-4 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 killSwitchActive
                   ? "bg-sage-600 hover:bg-sage-700 text-white"
                   : "bg-clay-600 hover:bg-clay-700 text-white"
@@ -434,73 +460,276 @@ export const GovernanceConsole: React.FC<GovernanceConsoleProps> = ({
             >
               {killSwitchActive ? (
                 <>
-                  <PlayCircle className="w-4 h-4" />
-                  <span>Resume Automated Order Approvals</span>
+                  <PlayCircle className="w-3.5 h-3.5" />
+                  <span>Resume Approvals</span>
                 </>
               ) : (
                 <>
-                  <PauseCircle className="w-4 h-4" />
-                  <span>Pause Automated Approvals (Manual Hold Mode)</span>
+                  <PauseCircle className="w-3.5 h-3.5" />
+                  <span>Pause All Approvals</span>
                 </>
               )}
             </button>
+
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-ivory-100 text-ink-800 border border-ivory-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Simulate Orders</span>
+            </button>
           </div>
+        </div>
+      </div>
 
-          {/* Live Impact Preview on Active Store Orders */}
-          <div className="p-6 rounded-2xl bg-white border border-ivory-300 shadow-enterprise space-y-4">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-sage-700">
-                Live Policy Simulation
-              </span>
-              <h3 className="font-serif font-bold text-base text-ink-900 mt-0.5">
-                How Current Rules Govern Incoming Orders
-              </h3>
-            </div>
+      {/* RESPONSIVE GOVERNANCE CONSOLE & LIVE SIMULATOR MODAL */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto">
+          {/* Backdrop with click-to-close */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsDrawerOpen(false)}
+          />
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-ivory-50 border border-ivory-200 flex items-center justify-between gap-2">
-                <div>
-                  <div className="font-bold text-ink-900">
-                    Standard VIP Order (${sampleVipPrice.toFixed(2)})
-                  </div>
-                  <div className="text-[11px] text-ink-600">
-                    1x Silk Shirt · {sampleVipDiscount}% Discount · 58.1% Margin
-                  </div>
+          {/* Responsive Modal Container - Auto-compacts to content height */}
+          <div className="relative w-full max-w-2xl lg:max-w-4xl my-auto max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-ivory-300 flex flex-col z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header - Compact */}
+            <div className="px-5 py-3.5 border-b border-ivory-200 flex items-start justify-between bg-ivory-50/60 shrink-0">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gold-800 px-2 py-0.5 rounded-full bg-gold-100 border border-gold-300">
+                    Governance Console · Parameter Tuning
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      killSwitchActive
+                        ? "bg-clay-100 text-clay-800 border-clay-300"
+                        : "bg-sage-100 text-sage-800 border-sage-300"
+                    }`}
+                  >
+                    {killSwitchActive ? "Emergency Hold" : "Auto-Approvals Active"}
+                  </span>
                 </div>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 ${
-                    vipOrderPasses
-                      ? "bg-sage-100 text-sage-800 border-sage-300"
-                      : "bg-clay-100 text-clay-800 border-clay-300"
-                  }`}
-                >
-                  {vipOrderPasses ? "✓ Auto-Approved" : "⛔ Held for Review"}
-                </span>
+                <h3 className="font-serif font-bold text-lg text-ink-900">
+                  Adjust Commercial Policy Rules
+                </h3>
+                <p className="text-[11px] text-ink-600">
+                  Set markdown ceilings, net margin floors, and auto-approval caps. Test results live on orders.
+                </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-ivory-50 border border-ivory-200 flex items-center justify-between gap-2">
-                <div>
-                  <div className="font-bold text-ink-900">
-                    Bulk 35% Discount Request ($332.80)
+              <div className="flex items-center gap-2">
+                {/* Presets in header */}
+                <div className="hidden sm:flex items-center gap-1">
+                  <button
+                    onClick={() =>
+                      applyPreset("Standard Luxury Retail", {
+                        maxOrderUSD: 250,
+                        discountCapPct: 15,
+                        marginFloorPct: 18,
+                      })
+                    }
+                    className="px-2 py-0.5 rounded-md bg-white hover:bg-ivory-200 text-ink-800 border border-ivory-300 text-[10px] font-semibold cursor-pointer"
+                  >
+                    Standard
+                  </button>
+                  <button
+                    onClick={() =>
+                      applyPreset("VIP Private Sale", {
+                        maxOrderUSD: 500,
+                        discountCapPct: 25,
+                        marginFloorPct: 14,
+                      })
+                    }
+                    className="px-2 py-0.5 rounded-md bg-berry-50 hover:bg-berry-100 text-berry-800 border border-berry-200 text-[10px] font-semibold cursor-pointer"
+                  >
+                    VIP Sale
+                  </button>
+                  <button
+                    onClick={() =>
+                      applyPreset("Strict Margin Protection", {
+                        maxOrderUSD: 175,
+                        discountCapPct: 5,
+                        marginFloorPct: 28,
+                      })
+                    }
+                    className="px-2 py-0.5 rounded-md bg-sage-50 hover:bg-sage-100 text-sage-800 border border-sage-200 text-[10px] font-semibold cursor-pointer"
+                  >
+                    Strict Margin
+                  </button>
+                </div>
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="p-1.5 rounded-xl hover:bg-ivory-200 text-ink-600 hover:text-ink-900 transition-colors cursor-pointer"
+                  title="Close drawer (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Body: Compact Sliders & Live Simulation */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+              {/* 3 Sliders in a 3-Column Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {/* 1. Promotional Discount Limit Slider */}
+                <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5 text-berry-700" />
+                      <span className="font-bold text-ink-900 text-[11px]">1. Discount Cap</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-ivory-300 font-bold text-xs text-ink-900">
+                      {discountCapPct}%
+                    </span>
                   </div>
-                  <div className="text-[11px] text-ink-600">
-                    4x Silk Blouses · 35% Discount · 9.2% Margin
+                  <input
+                    type="range"
+                    min={0}
+                    max={40}
+                    step={1}
+                    value={discountCapPct}
+                    onChange={(e) => setDiscountCapPct(Number(e.target.value))}
+                    className="w-full accent-[#2D6A4F]"
+                  />
+                  <div className="flex justify-between text-[9px] text-ink-500">
+                    <span>0% (None)</span>
+                    <span>Cap: 40%</span>
                   </div>
                 </div>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 ${
-                    bulkOrderPasses
-                      ? "bg-sage-100 text-sage-800 border-sage-300"
-                      : "bg-clay-100 text-clay-800 border-clay-300"
-                  }`}
+
+                {/* 2. Minimum Profit Margin Floor Slider */}
+                <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-sage-700" />
+                      <span className="font-bold text-ink-900 text-[11px]">2. Margin Floor</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-ivory-300 font-bold text-xs text-sage-700">
+                      {marginFloorPct}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={5}
+                    max={65}
+                    step={1}
+                    value={marginFloorPct}
+                    onChange={(e) => setMarginFloorPct(Number(e.target.value))}
+                    className="w-full accent-[#2D6A4F]"
+                  />
+                  <div className="flex justify-between text-[9px] text-ink-500">
+                    <span>5% (Low)</span>
+                    <span>Max: 65%</span>
+                  </div>
+                </div>
+
+                {/* 3. Automated Order Approval Threshold Slider */}
+                <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-gold-700" />
+                      <span className="font-bold text-ink-900 text-[11px]">3. Auto Cap</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-ivory-300 font-bold text-xs text-ink-900">
+                      ${maxOrderUSD}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={100}
+                    max={1000}
+                    step={25}
+                    value={maxOrderUSD}
+                    onChange={(e) => setMaxOrderUSD(Number(e.target.value))}
+                    className="w-full accent-[#2D6A4F]"
+                  />
+                  <div className="flex justify-between text-[9px] text-ink-500">
+                    <span>$100</span>
+                    <span>Cap: $1,000</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Order Simulation in 2-Column Grid */}
+              <div className="p-3.5 rounded-xl bg-white border-2 border-sage-200 shadow-enterprise space-y-2.5">
+                <div className="flex items-center justify-between pb-1 border-b border-ivory-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sage-800">
+                    Live Policy Outcome Simulation
+                  </span>
+                  <span className="text-[10px] text-ink-500">Auto-evaluates against sliders above</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                  <div className="p-2.5 rounded-lg bg-ivory-50 border border-ivory-200 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-ink-900 text-[11px]">
+                        Scenario A: VIP Single Item (${sampleVipPrice.toFixed(2)})
+                      </div>
+                      <div className="text-[10px] text-ink-600 mt-0.5">
+                        1x Silk Shirt · {sampleVipDiscount}% Off · 58.1% Margin
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                        vipOrderPasses
+                          ? "bg-sage-100 text-sage-800 border-sage-300"
+                          : "bg-clay-100 text-clay-800 border-clay-300"
+                      }`}
+                    >
+                      {vipOrderPasses ? "✓ Auto-Approved" : "⛔ Review"}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-ivory-50 border border-ivory-200 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-ink-900 text-[11px]">
+                        Scenario B: Bulk Order Request ($332.80)
+                      </div>
+                      <div className="text-[10px] text-ink-600 mt-0.5">
+                        4x Silk Blouses · 35% Off · 9.2% Margin
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                        bulkOrderPasses
+                          ? "bg-sage-100 text-sage-800 border-sage-300"
+                          : "bg-clay-100 text-clay-800 border-clay-300"
+                      }`}
+                    >
+                      {bulkOrderPasses ? "✓ Auto-Approved" : "⛔ Floor Block"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Drawer Footer with Save and Done - Compact */}
+            <div className="px-5 py-3 border-t border-ivory-200 bg-ivory-50 flex items-center justify-between">
+              <span className="text-xs text-ink-500">
+                Press <kbd className="px-1.5 py-0.5 bg-white border border-ivory-300 rounded text-[10px]">Esc</kbd> or click outside to close
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSaveCommercialRules}
+                  disabled={saving}
+                  className="px-3.5 py-1.5 rounded-xl bg-sage-600 hover:bg-sage-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {bulkOrderPasses ? "✓ Auto-Approved" : "⛔ Held by Rules"}
-                </span>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{saving ? "Saving..." : "Save Guardrails"}</span>
+                </button>
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="px-4 py-1.5 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold transition-all cursor-pointer"
+                >
+                  Done
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* SECTION 3: ORDER VALUE & APPROVAL AUTHORITY POLICIES */}
       <div className="bg-white rounded-2xl border border-ivory-300 p-6 shadow-enterprise">
