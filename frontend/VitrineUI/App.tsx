@@ -222,7 +222,7 @@ export default function App() {
         <main className="flex-1 w-full max-w-[1600px] mx-auto px-5 sm:px-6 lg:px-8 py-6">
           {activeTab === "tower" && <ControlTower onNavigate={setActiveTab} />}
           {activeTab === "brain" && <ProductBrain />}
-          {activeTab === "theatre" && <AgentCommerceExchange />}
+          {activeTab === "theatre" && <AgentCommerceExchange onNavigate={setActiveTab} />}
           {activeTab === "promise" && <PromiseInspector />}
           {activeTab === "ledger" && <LedgerExplorer />}
           {activeTab === "fraud" && (

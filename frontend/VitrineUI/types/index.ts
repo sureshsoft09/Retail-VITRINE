@@ -124,7 +124,22 @@ export interface TransactionResponse {
     [key: string]: any;
   };
   gate_passed: boolean;
+  gate_result?: any;
   step_events: AgentStep[];
+  evaluation_summary?: {
+    candidate_sku?: string;
+    candidate_node?: string;
+    candidate_carrier?: string;
+    candidate_cutoff?: string;
+    candidate_transit_hours?: number;
+    candidate_atp_units?: number;
+    critic_verdict?: string;
+    discrepancy_breakdown?: string;
+    substitute_sku?: string;
+    substitute_title?: string;
+    matching_attributes?: string;
+    full_text?: string;
+  };
   message: string;
 }
 
