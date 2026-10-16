@@ -66,48 +66,7 @@ interface VitrineStore {
   appendLedgerCommitment: (record: CommitmentRecord) => void;
 }
 
-const initialCommitments: CommitmentRecord[] = [
-  {
-    commitment_id: "CMT-2026-0001",
-    sequence_num: 1,
-    txn_id: "ORD-2026-9041",
-    prev_hash:
-      "0000000000000000000000000000000000000000000000000000000000000000",
-    current_hash:
-      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    sku: "SKU-4829-SILK-BLOUSE",
-    quantity: 1,
-    unit_price: 128.0,
-    currency: "USD",
-    fulfilment_node_id: "DC-NORTH",
-    carrier_id: "FedEx Priority Overnight",
-    buyer_agent_id: "Nordstrom VIP Styling Concierge",
-    mandate_id: "AUTH-VIP-8841A",
-    promised_delivery_date: "Tomorrow by 4:00 PM",
-    gate_evaluation_id: "All 11 Commercial & Fulfillment Checks Passed",
-  },
-  {
-    commitment_id: "CMT-2026-0002",
-    sequence_num: 2,
-    txn_id: "ORD-2026-9048",
-    prev_hash:
-      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    current_hash:
-      "e9f35de735d1d929a0ff7fcac3cd7bf9b99d709328813a28e0ad0eccfab1087b",
-    timestamp: new Date(Date.now() - 900000).toISOString(),
-    sku: "SKU-4830-SILK-SHIRT",
-    quantity: 1,
-    unit_price: 120.6,
-    currency: "USD",
-    fulfilment_node_id: "DC-NORTH",
-    carrier_id: "FedEx Priority Overnight",
-    buyer_agent_id: "Direct Priority Personal Shopper",
-    mandate_id: "AUTH-STD-9920C",
-    promised_delivery_date: "Tomorrow by 4:00 PM",
-    gate_evaluation_id: "All 11 Commercial & Fulfillment Checks Passed",
-  },
-];
+const initialCommitments: CommitmentRecord[] = [];
 
 const initialFraudRecords: EnterpriseFraudRecord[] = [
   {

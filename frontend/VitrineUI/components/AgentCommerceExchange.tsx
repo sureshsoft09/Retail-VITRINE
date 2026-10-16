@@ -295,9 +295,9 @@ export const AgentCommerceExchange: React.FC<AgentCommerceExchangeProps> = ({ on
         },
       };
 
-      // Call Cloud Run UCP accept or BFF commit
-      const res = await api.acceptUCPOffer(offer.offer_id, commitPayload);
-      const rawRecord = (res as any)?.commitment_record || (res as any)?.record || res || {};
+      // Call dedicated BFF endpoint /api/admin/ledger/commit to persist directly to BigQuery
+      const res = await api.commitOrder(commitPayload);
+      const rawRecord = (res as any)?.record || (res as any)?.commitment_record || res || {};
 
       const finalTxnId =
         rawRecord.txn_id ||

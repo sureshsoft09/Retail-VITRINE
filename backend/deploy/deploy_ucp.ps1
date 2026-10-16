@@ -26,7 +26,7 @@ try {
         --region $REGION `
         --allow-unauthenticated `
         --service-account $SA_EMAIL `
-        --set-env-vars "GCP_PROJECT_ID=$PROJECT_ID,PROJECT_ID=$PROJECT_ID,GCP_REGION=$REGION,BQ_DATASET_CATALOG=vitrine_dataset,BQ_DATASET_LEDGER=vitrine_dataset,AGENT_ENGINE_RESOURCE_NAME=projects/285078287322/locations/us-central1/reasoningEngines/4500934686062673920,AGENTS_HOST_URL=https://vitrine-agents-host-285078287322.us-central1.run.app" `
+        --set-env-vars "GCP_PROJECT_ID=$PROJECT_ID,PROJECT_ID=$PROJECT_ID,GCP_REGION=$REGION,BQ_DATASET_CATALOG=vitrine_commerce,BQ_DATASET_LEDGER=vitrine_commerce,AGENT_ENGINE_RESOURCE_NAME=projects/285078287322/locations/us-central1/reasoningEngines/4500934686062673920,AGENTS_HOST_URL=https://vitrine-agents-host-285078287322.us-central1.run.app" `
         --timeout 600
 
     if ($LASTEXITCODE -eq 0) {

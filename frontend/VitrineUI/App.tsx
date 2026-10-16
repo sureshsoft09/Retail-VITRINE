@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header, NavTab } from "./components/Header";
 import { AgentCommerceExchange } from "./components/AgentCommerceExchange";
 import { ProductBrain } from "./components/ProductBrain";
@@ -9,6 +9,7 @@ import { FraudQueue } from "./components/FraudQueue";
 import { GovernanceConsole } from "./components/GovernanceConsole";
 import { VirtualTryOnStudio } from "./components/VirtualTryOnStudio";
 import { useVitrineStore } from "./store";
+import { api } from "./api";
 import {
   PauseCircle,
   CheckCircle2,
@@ -31,7 +32,22 @@ export default function App() {
     discountCapPct,
     marginFloorPct,
     fraudRecords,
+    setLedgerCommitments,
   } = useVitrineStore();
+
+  useEffect(() => {
+    // Pre-load immutable commitment records from BigQuery on application startup
+    api
+      .getLedger()
+      .then((records) => {
+        if (Array.isArray(records) && records.length > 0) {
+          setLedgerCommitments(records);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load initial ledger from BigQuery:", err);
+      });
+  }, [setLedgerCommitments]);
 
   const quarantinedCount = fraudRecords.filter(
     (r) => r.status === "QUARANTINED"

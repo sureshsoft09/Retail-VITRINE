@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import os
 import sys
 from pathlib import Path
 
@@ -141,10 +142,17 @@ class CommitOrderRequest(BaseModel):
     sku: str
     quantity: int = 1
     unit_price: float
-    fulfilment_node_id: str = "DC-NORTH"
-    carrier_id: str = "FedEx-Express"
-    buyer_agent_id: str = "buyer-agent"
-    mandate_id: str = "mandate-ap2"
+    currency: Optional[str] = "USD"
+    fulfilment_node_id: Optional[str] = "DC-NORTH"
+    carrier_id: Optional[str] = "FedEx-Express"
+    buyer_agent_id: Optional[str] = "buyer-agent"
+    mandate_id: Optional[str] = "mandate-ap2"
+    promised_delivery_date: Optional[str] = None
+    gate_evaluation_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    ap2_mandate: Optional[Dict[str, Any]] = None
+
+    model_config = {"extra": "allow"}
 
 class CatalogueEnrichRequest(BaseModel):
     skus: Optional[List[str]] = None
@@ -658,21 +666,6 @@ async def start_transaction(req: StartTransactionRequest):
     # Persist live steps for the Transaction Theatre
     for step in result.get("step_events", []):
         firestore_service.publish_step_event(req.txn_id, step)
-
-    # If offer is ready and commitment gate passes, append to ledger
-    if result.get("status") in ("OFFER_PRESENTED", "SUBSTITUTION_OFFER_PRESENTED") and result.get("active_offer"):
-        offer = result["active_offer"]
-        bq_client.append_commitment({
-            "txn_id": req.txn_id,
-            "sku": offer.get("sku", "UNKNOWN_SKU"),
-            "quantity": int(offer.get("quantity", offer.get("qty", 1))),
-            "unit_price": float(offer.get("unit_price", offer.get("price", 0.0))),
-            "currency": offer.get("currency", "USD"),
-            "fulfilment_node_id": offer.get("delivery_promise", {}).get("fulfilment_node_id", "DC-NORTH") if isinstance(offer.get("delivery_promise"), dict) else "DC-NORTH",
-            "carrier_id": offer.get("delivery_promise", {}).get("carrier_id", "FedEx-Express") if isinstance(offer.get("delivery_promise"), dict) else "FedEx-Express",
-            "mandate_id": (req.ap2_mandate or {}).get("mandate_id", "mandate-auto"),
-            "buyer_agent_id": req.buyer_agent_id,
-        })
 
     return result
 

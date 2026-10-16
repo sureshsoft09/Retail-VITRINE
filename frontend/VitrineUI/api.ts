@@ -208,10 +208,16 @@ export const api = {
     sku: string;
     quantity: number;
     unit_price: number;
-    fulfilment_node_id: string;
-    carrier_id: string;
-    buyer_agent_id: string;
-    mandate_id: string;
+    currency?: string;
+    fulfilment_node_id?: string;
+    carrier_id?: string;
+    buyer_agent_id?: string;
+    mandate_id?: string;
+    promised_delivery_date?: string;
+    gate_evaluation_id?: string;
+    offer_id?: string;
+    ap2_mandate?: any;
+    [key: string]: any;
   }): Promise<{ status: string; record: CommitmentRecord }> {
     return fetchJson(`${BFF_BASE}/api/admin/ledger/commit`, {
       method: "POST",

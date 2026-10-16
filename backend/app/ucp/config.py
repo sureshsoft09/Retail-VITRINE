@@ -18,8 +18,8 @@ class UCPSettings(BaseSettings):
         "AGENTS_HOST_URL",
         "https://vitrine-agents-host-285078287322.us-central1.run.app",
     )
-    BQ_DATASET_CATALOG: str = os.getenv("BQ_DATASET_CATALOG", "vitrine_dataset")
-    BQ_DATASET_LEDGER: str = os.getenv("BQ_DATASET_LEDGER", "vitrine_dataset")
+    BQ_DATASET_CATALOG: str = os.getenv("BQ_DATASET_CATALOG", "vitrine_commerce")
+    BQ_DATASET_LEDGER: str = os.getenv("BQ_DATASET_LEDGER", "vitrine_commerce")
     FIRESTORE_DATABASE: str = os.getenv("FIRESTORE_DATABASE", "(default)")
     PORT: int = int(os.getenv("PORT", 8082))
     UCP_VERSION: str = os.getenv("UCP_VERSION", "1.0.0")

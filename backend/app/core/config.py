@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     AGENT_ENGINE_RESOURCE_NAME: str = "projects/285078287322/locations/us-central1/reasoningEngines/4500934686062673920"
 
     # BigQuery & Firestore
-    BQ_DATASET_CATALOG: str = "vitrine_dataset"
-    BQ_DATASET_LEDGER: str = "vitrine_dataset"
+    BQ_DATASET_CATALOG: str = "vitrine_commerce"
+    BQ_DATASET_LEDGER: str = "vitrine_commerce"
     BQ_CONNECTION_ID: str = "us-central1.gemini_conn"
     FIRESTORE_DATABASE: str = "(default)"
 
