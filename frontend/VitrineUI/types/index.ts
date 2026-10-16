@@ -171,3 +171,55 @@ export interface ServiceHealth {
   region: string;
   latency_ms?: number;
 }
+
+// --- Virtual Try-On Types ---
+
+export interface VtoProduct {
+  product_id: string;
+  product_name: string;
+  category: string;
+  size: string[];
+  color: string;
+  neck_type: string;
+  sleeve_type: string;
+  gender_category?: string;
+  brand?: string;
+  price: number;
+  currency: string;
+  stock_status: string;
+  product_image_gcs_uri?: string;
+  product_image_url?: string;
+}
+
+export interface VtoSession {
+  session_id: string;
+  state: string;
+  message: string;
+}
+
+export interface VtoChatMessageResponse {
+  session_id: string;
+  state: string;
+  message: string;
+  matching_products: VtoProduct[];
+  missing_attributes?: string[];
+}
+
+export interface VtoPhotoUploadResponse {
+  session_id: string;
+  state: string;
+  message: string;
+  is_valid: boolean;
+  detected_person: boolean;
+  preview_url?: string;
+}
+
+export interface VtoTryOnResult {
+  session_id: string;
+  status: string;
+  try_on_image_url: string;
+  product_id: string;
+  disclaimer: string;
+  message: string;
+}
+

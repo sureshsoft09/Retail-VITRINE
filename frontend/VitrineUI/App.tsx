@@ -7,6 +7,7 @@ import { LedgerExplorer } from "./components/LedgerExplorer";
 import { ControlTower } from "./components/ControlTower";
 import { FraudQueue } from "./components/FraudQueue";
 import { GovernanceConsole } from "./components/GovernanceConsole";
+import { VirtualTryOnStudio } from "./components/VirtualTryOnStudio";
 import { useVitrineStore } from "./store";
 import {
   PauseCircle,
@@ -51,11 +52,13 @@ export default function App() {
     },
     brain: {
       capability: "Product Brain",
-      title:
-        productHubSection === "vto"
-          ? "Product Brain · Virtual Try-On Studio"
-          : "Product Brain · Agentic Discoverability",
-      outcomeQuestion: "Can AI buyer agents & customers discover products?",
+      title: "Product Brain · Agentic Discoverability & Specs",
+      outcomeQuestion: "Can AI buyer agents discover and understand products?",
+    },
+    vto: {
+      capability: "Generative AI Experience",
+      title: "AI Virtual Try-On Studio · Live Vertex AI",
+      outcomeQuestion: "How will this garment fit and drape in real life?",
     },
     promise: {
       capability: "Promise Intelligence",
@@ -111,32 +114,15 @@ export default function App() {
 
             {/* Right: Contextual Mode Switchers & Live Agentic Commerce Status */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {/* Contextual Sub-Switcher for Product Brain */}
+              {/* Contextual Link to Virtual Try-On Studio */}
               {activeTab === "brain" && (
-                <div className="hidden sm:flex items-center p-0.5 rounded-lg bg-ivory-200/80 border border-ivory-300 text-xs">
-                  <button
-                    onClick={() => setProductHubSection("catalog")}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all ${
-                      productHubSection === "catalog"
-                        ? "bg-white text-ink-900 shadow-sm"
-                        : "text-ink-600 hover:text-ink-900"
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-sage-700" />
-                    <span>Discoverability</span>
-                  </button>
-                  <button
-                    onClick={() => setProductHubSection("vto")}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all ${
-                      productHubSection === "vto"
-                        ? "bg-white text-ink-900 shadow-sm"
-                        : "text-ink-600 hover:text-ink-900"
-                    }`}
-                  >
-                    <Shirt className="w-3.5 h-3.5 text-berry-700" />
-                    <span>Virtual Try-On</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => setActiveTab("vto")}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ivory-100 hover:bg-ivory-200 text-ink-700 border border-ivory-300 text-xs font-semibold transition-all shadow-xs"
+                >
+                  <Shirt className="w-3.5 h-3.5 text-[#7A2E3B]" />
+                  <span>Open Live Virtual Try-On Studio →</span>
+                </button>
               )}
 
               {/* Contextual Sub-Switcher for Trust & Governance */}
@@ -222,6 +208,7 @@ export default function App() {
         <main className="flex-1 w-full max-w-[1600px] mx-auto px-5 sm:px-6 lg:px-8 py-6">
           {activeTab === "tower" && <ControlTower onNavigate={setActiveTab} />}
           {activeTab === "brain" && <ProductBrain />}
+          {activeTab === "vto" && <VirtualTryOnStudio onNavigate={setActiveTab} />}
           {activeTab === "theatre" && <AgentCommerceExchange onNavigate={setActiveTab} />}
           {activeTab === "promise" && <PromiseInspector />}
           {activeTab === "ledger" && <LedgerExplorer />}

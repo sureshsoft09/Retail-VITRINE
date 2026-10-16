@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Eye,
@@ -7,10 +7,8 @@ import {
   AlertCircle,
   Search,
   FileText,
-  Camera,
   ShieldCheck,
   Wand2,
-  Shirt,
   ArrowRight,
   Layers,
   Award,
@@ -167,56 +165,17 @@ const FALLBACK_CATALOG: Product[] = [
   },
 ];
 
-const VTO_MODELS = [
-  {
-    id: "editorial-studio",
-    name: "Studio Lookbook — Classic Tailored",
-    fitProfile: "Height 5'9\" · Wearing Size M · Structured Blazer Pairing",
-    drapeNote: "Shows collar structure and sleeve cuff drape under studio daylight.",
-    fitAccuracy: "98.4% Size M Fit Match",
-    conversionLift: "+34% Add-to-Bag Rate",
-  },
-  {
-    id: "daylight-resort",
-    name: "Natural Daylight — Relaxed Styling",
-    fitProfile: "Height 5'6\" · Wearing Size M · Untucked Fluid Drape",
-    drapeNote: "Highlights fabric breathability, hemline length, and ivory tone.",
-    fitAccuracy: "97.9% Length & Shoulder Match",
-    conversionLift: "-28% Size Return Rate",
-  },
-  {
-    id: "evening-concierge",
-    name: "Evening Styling — Silk Trouser Ensemble",
-    fitProfile: "Height 5'8\" · Wearing Size M · French-Tucked Silhouette",
-    drapeNote: "Demonstrates lustrous 19-momme silk sheen for evening occasions.",
-    fitAccuracy: "99.1% Color & Sheen Fidelity",
-    conversionLift: "+41% VIP Concierge Approval",
-  },
-];
-
 export const ProductBrain: React.FC = () => {
-  const {
-    brainMode,
-    setBrainMode,
-    productHubSection,
-    setProductHubSection,
-  } = useVitrineStore();
+  const { brainMode, setBrainMode } = useVitrineStore();
 
   const [products, setProducts] = useState<Product[]>(FALLBACK_CATALOG);
   const [selectedSku, setSelectedSku] = useState<string>(
     "SKU-4829-SILK-BLOUSE"
   );
   const [enriching, setEnriching] = useState(false);
-  const [selectedVtoModel, setSelectedVtoModel] = useState<string>(
-    VTO_MODELS[0].id
-  );
-  const [vtoGenerating, setVtoGenerating] = useState(false);
-  const [vtoGenerated, setVtoGenerated] = useState(true);
   const [searchQuery, setSearchQuery] = useState(
     "Ivory breathable silk top, Size M (21 in chest), verified care instructions"
   );
-
-  const vtoSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -234,15 +193,6 @@ export const ProductBrain: React.FC = () => {
       mounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (productHubSection === "vto" && vtoSectionRef.current) {
-      vtoSectionRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, [productHubSection]);
 
   const activeProduct =
     products.find((p) => p.sku === selectedSku) || FALLBACK_CATALOG[0];
@@ -264,17 +214,7 @@ export const ProductBrain: React.FC = () => {
     }
   };
 
-  const handleRunVto = () => {
-    setVtoGenerating(true);
-    setTimeout(() => {
-      setVtoGenerating(false);
-      setVtoGenerated(true);
-    }, 450);
-  };
-
   const isEnriched = brainMode === "enriched";
-  const currentVtoModel =
-    VTO_MODELS.find((m) => m.id === selectedVtoModel) || VTO_MODELS[0];
 
   const storySteps = [
     {
@@ -364,21 +304,6 @@ export const ProductBrain: React.FC = () => {
               </button>
             </div>
 
-            <button
-              onClick={() =>
-                setProductHubSection(
-                  productHubSection === "vto" ? "catalog" : "vto"
-                )
-              }
-              className="px-3.5 py-2.5 rounded-xl bg-[#1C1917] hover:bg-ink-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Shirt className="w-3.5 h-3.5 text-[#F6C867]" />
-              <span>
-                {productHubSection === "vto"
-                  ? "Focus Catalog Readiness"
-                  : "Jump to Virtual Try-On Studio"}
-              </span>
-            </button>
           </div>
         </div>
 
@@ -760,214 +685,6 @@ export const ProductBrain: React.FC = () => {
                   )
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 3: VIRTUAL TRY-ON STUDIO (Premium Retail Capability) */}
-      <div
-        ref={vtoSectionRef}
-        className={`rounded-2xl border p-6 shadow-enterprise-md transition-all ${
-          productHubSection === "vto"
-            ? "bg-gradient-to-br from-[#1C1917] via-[#26211E] to-[#3A1C2E] text-white border-berry-500 ring-2 ring-berry-500/30"
-            : "bg-gradient-to-br from-[#1C1917] via-[#24201D] to-[#2E1B26] text-white border-ivory-300"
-        }`}
-      >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-white/10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#F6C867]">
-              <Shirt className="w-3.5 h-3.5" />
-              <span>Premium Retail Capability · Virtual Try-On Studio</span>
-            </div>
-            <h3 className="font-serif font-bold text-2xl text-white mt-2">
-              Interactive Virtual Try-On & Visual Fit Studio
-            </h3>
-            <p className="text-xs sm:text-sm text-ivory-300 mt-1 max-w-3xl">
-              Allow customers, personal stylists, and merchandising teams to preview exact garment drape, fabric sheen, and size proportions across diverse body profiles—increasing conversion and reducing size-related returns.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-xs">
-              <div className="text-[10px] uppercase text-ivory-300 font-bold">
-                Merchandising Impact
-              </div>
-              <div className="font-bold text-[#95C9AA]">
-                +34% Conversion · -28% Fit Returns
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-          {/* Left 5 Cols: Garment & Styling Lookbook Selector */}
-          <div className="lg:col-span-5 space-y-4">
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-ivory-300 block mb-2">
-                1. Selected Garment Style
-              </label>
-              <div className="p-3.5 rounded-xl bg-white/[0.07] border border-white/15 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-serif font-bold text-white">
-                    {activeProduct.title}
-                  </div>
-                  <div className="text-xs text-ivory-300 mt-0.5">
-                    {activeProduct.sku} · ${activeProduct.price.toFixed(2)} · Size M
-                  </div>
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-sage-500/20 text-[#95C9AA] border border-sage-500/30 text-[11px] font-bold">
-                  In Stock
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-ivory-300 block mb-2">
-                2. Select Customer Fit & Styling Profile
-              </label>
-              <div className="space-y-2.5">
-                {VTO_MODELS.map((model) => {
-                  const active = model.id === selectedVtoModel;
-                  return (
-                    <button
-                      key={model.id}
-                      onClick={() => {
-                        setSelectedVtoModel(model.id);
-                        handleRunVto();
-                      }}
-                      className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        active
-                          ? "bg-white text-ink-900 border-white shadow-md"
-                          : "bg-white/[0.05] hover:bg-white/10 text-white border-white/15"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold">{model.name}</span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            active
-                              ? "bg-sage-100 text-sage-800"
-                              : "bg-white/10 text-[#95C9AA]"
-                          }`}
-                        >
-                          {model.fitAccuracy}
-                        </span>
-                      </div>
-                      <div
-                        className={`text-[11px] mt-1 ${
-                          active ? "text-ink-600" : "text-ivory-300"
-                        }`}
-                      >
-                        {model.fitProfile}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <button
-              onClick={handleRunVto}
-              disabled={vtoGenerating}
-              className="w-full py-3 px-4 rounded-xl bg-[#D4942A] hover:bg-[#B7791F] text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Camera className="w-4 h-4" />
-              <span>
-                {vtoGenerating
-                  ? "Rendering Studio Fit Preview..."
-                  : "Generate Virtual Try-On Preview"}
-              </span>
-            </button>
-          </div>
-
-          {/* Right 7 Cols: Visual Try-On Canvas & Fit Verification */}
-          <div className="lg:col-span-7 bg-white/[0.06] rounded-2xl border border-white/15 p-5 flex flex-col justify-between space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-              <div>
-                <div className="text-xs font-bold text-white">
-                  {currentVtoModel.name}
-                </div>
-                <div className="text-[11px] text-ivory-300">
-                  {currentVtoModel.fitProfile}
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-berry-500/30 text-[#F2B5D4] border border-berry-400/30 text-xs font-bold">
-                {currentVtoModel.conversionLift}
-              </span>
-            </div>
-
-            {/* Visual Garment Fit Preview Card */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-[#141210] p-5 rounded-xl border border-white/10">
-              {/* Visual Silhouette & Garment Card */}
-              <div className="aspect-[4/5] rounded-xl bg-gradient-to-b from-[#FAF7F2] to-[#E6DFD3] text-ink-900 p-5 flex flex-col justify-between relative overflow-hidden shadow-inner">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ink-900 text-white">
-                    Size M Preview
-                  </span>
-                  <span className="text-[10px] font-bold text-sage-800 bg-sage-100 px-2 py-0.5 rounded">
-                    Ivory Silk
-                  </span>
-                </div>
-
-                <div className="my-auto text-center space-y-2 py-4">
-                  <div className="w-20 h-20 rounded-2xl bg-white/90 border border-ivory-300 mx-auto flex items-center justify-center shadow-sm">
-                    <Shirt className="w-10 h-10 text-ink-800" />
-                  </div>
-                  <div className="font-serif font-bold text-sm text-ink-900 px-2">
-                    {activeProduct.title}
-                  </div>
-                  <div className="text-[11px] text-ink-600">
-                    {currentVtoModel.fitProfile.split("·")[0]} ·{" "}
-                    {currentVtoModel.fitProfile.split("·")[1]}
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-white/90 border border-ivory-300 text-[11px] text-ink-800 font-medium text-center">
-                  ✓ {currentVtoModel.fitAccuracy}
-                </div>
-              </div>
-
-              {/* Fit & Drape Details */}
-              <div className="space-y-3 text-xs">
-                <div className="text-xs font-bold uppercase tracking-wider text-[#F6C867]">
-                  Verified Fit & Drape Analysis
-                </div>
-                <p className="text-ivory-200 leading-relaxed">
-                  {currentVtoModel.drapeNote}
-                </p>
-
-                <div className="space-y-2 pt-1">
-                  <div className="p-2.5 rounded-lg bg-white/[0.05] border border-white/10 flex justify-between">
-                    <span className="text-ivory-300">Chest Ease (Size M):</span>
-                    <span className="font-bold text-white">21.0 in (Comfort Fit)</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/[0.05] border border-white/10 flex justify-between">
-                    <span className="text-ivory-300">Fabric Drape Weight:</span>
-                    <span className="font-bold text-white">19 Momme Mulberry Silk</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/[0.05] border border-white/10 flex justify-between">
-                    <span className="text-ivory-300">Opacity & Lining:</span>
-                    <span className="font-bold text-[#95C9AA]">Opaque Ivory Weave</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/[0.05] border border-white/10 flex justify-between">
-                    <span className="text-ivory-300">Size Confidence:</span>
-                    <span className="font-bold text-[#95C9AA]">True to Size (98.4%)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ivory-300 pt-1">
-              <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-[#95C9AA]" />
-                <span>
-                  Approved for Storefront Product Page & Personal Stylist Concierge
-                </span>
-              </span>
-              <span className="text-[#F6C867] font-semibold">
-                {vtoGenerated ? "Studio Preview Ready" : "Ready"}
-              </span>
             </div>
           </div>
         </div>

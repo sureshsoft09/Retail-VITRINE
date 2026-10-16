@@ -6,6 +6,11 @@ import {
   FraudIncident,
   ServiceHealth,
   AgentStep,
+  VtoProduct,
+  VtoSession,
+  VtoChatMessageResponse,
+  VtoPhotoUploadResponse,
+  VtoTryOnResult,
 } from "./types";
 
 // Base URLs defaulting to live Google Cloud Run services
@@ -442,5 +447,260 @@ export const api = {
         };
       }
     }
+  },
+
+  // --- Virtual Try-On Studio API ---
+  vto: {
+    async listProducts(): Promise<VtoProduct[]> {
+      try {
+        const prods = await fetchJson<VtoProduct[]>(`${BFF_BASE}/api/vto/products`);
+        return prods.map((p) => ({
+          ...p,
+          product_image_url: `${BFF_BASE}/api/vto/products/${p.product_id}/image`,
+        }));
+      } catch (err) {
+        console.warn("Failed to fetch VTO products from BFF, falling back to local list:", err);
+        return [
+          {
+            product_id: "SKU-4829-SILK-BLOUSE",
+            product_name: "100% Mulberry Silk Draped Blouse — Ivory",
+            category: "blouse",
+            size: ["XS", "S", "M", "L"],
+            color: "ivory",
+            neck_type: "draped neck",
+            sleeve_type: "long sleeve",
+            brand: "Maison Vitrine",
+            price: 128.0,
+            currency: "USD",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/SKU-4829-SILK-BLOUSE/image`,
+          },
+          {
+            product_id: "SKU-4830-SILK-SHIRT",
+            product_name: "Relaxed French Linen-Silk Shirt — Ivory",
+            category: "shirt",
+            size: ["XS", "S", "M", "L"],
+            color: "ivory",
+            neck_type: "collar",
+            sleeve_type: "long sleeve",
+            brand: "Maison Vitrine",
+            price: 134.0,
+            currency: "USD",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/SKU-4830-SILK-SHIRT/image`,
+          },
+          {
+            product_id: "TSHIRT-1001",
+            product_name: "Yellow Crew Neck Essential T-Shirt",
+            category: "t-shirt",
+            size: ["S", "M", "L", "XL"],
+            color: "yellow",
+            neck_type: "round neck",
+            sleeve_type: "short sleeve",
+            brand: "Urban Thread Co.",
+            price: 999.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/TSHIRT-1001/image`,
+          },
+          {
+            product_id: "TSHIRT-1002",
+            product_name: "Navy Blue V-Neck Slim Fit T-Shirt",
+            category: "t-shirt",
+            size: ["S", "M", "L"],
+            color: "blue",
+            neck_type: "v-neck",
+            sleeve_type: "short sleeve",
+            brand: "AeroStudio",
+            price: 1199.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/TSHIRT-1002/image`,
+          },
+          {
+            product_id: "TSHIRT-1003",
+            product_name: "Mustard Yellow Classic Polo Collar T-Shirt",
+            category: "t-shirt",
+            size: ["M", "L", "XL"],
+            color: "yellow",
+            neck_type: "polo",
+            sleeve_type: "short sleeve",
+            brand: "Nordic Polo",
+            price: 1499.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/TSHIRT-1003/image`,
+          },
+          {
+            product_id: "SHIRT-2001",
+            product_name: "Crisp White Formal Business Shirt",
+            category: "shirt",
+            size: ["M", "L", "XL"],
+            color: "white",
+            neck_type: "collar",
+            sleeve_type: "long sleeve",
+            brand: "Elevate Apparel",
+            price: 1999.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/SHIRT-2001/image`,
+          },
+          {
+            product_id: "SHIRT-2002",
+            product_name: "Olive Green Casual Linen Shirt",
+            category: "shirt",
+            size: ["S", "M", "L", "XL"],
+            color: "green",
+            neck_type: "collar",
+            sleeve_type: "long sleeve",
+            brand: "Nordic Linen",
+            price: 2199.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/SHIRT-2002/image`,
+          },
+          {
+            product_id: "HOODIE-3001",
+            product_name: "Pitch Black Heavyweight Pullover Fleece Hoodie",
+            category: "hoodie",
+            size: ["S", "M", "L", "XL", "XXL"],
+            color: "black",
+            neck_type: "hooded",
+            sleeve_type: "long sleeve",
+            brand: "StreetCulture",
+            price: 2499.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/HOODIE-3001/image`,
+          },
+          {
+            product_id: "HOODIE-3002",
+            product_name: "Heather Grey Premium Athletic Zip Hoodie",
+            category: "hoodie",
+            size: ["M", "L", "XL"],
+            color: "grey",
+            neck_type: "hooded",
+            sleeve_type: "long sleeve",
+            brand: "AeroStudio",
+            price: 2699.0,
+            currency: "INR",
+            stock_status: "in_stock",
+            product_image_url: `${BFF_BASE}/api/vto/products/HOODIE-3002/image`,
+          },
+        ];
+      }
+    },
+
+    getProductImageUrl(productId: string): string {
+      return `${BFF_BASE}/api/vto/products/${productId}/image`;
+    },
+
+    async createSession(): Promise<VtoSession> {
+      try {
+        return await fetchJson<VtoSession>(`${BFF_BASE}/api/vto/sessions`, {
+          method: "POST",
+        });
+      } catch (err) {
+        return {
+          session_id: `vto-${Date.now().toString(36)}`,
+          state: "INITIAL",
+          message: "Welcome to Retail AI Virtual Try-On! What apparel item are you looking to try on today?",
+        };
+      }
+    },
+
+    async sendMessage(sessionId: string, message: string): Promise<VtoChatMessageResponse> {
+      return fetchJson<VtoChatMessageResponse>(
+        `${BFF_BASE}/api/vto/sessions/${sessionId}/message`,
+        {
+          method: "POST",
+          body: JSON.stringify({ message }),
+        }
+      );
+    },
+
+    async selectProduct(sessionId: string, selectionIndex: number | string): Promise<VtoChatMessageResponse> {
+      return fetchJson<VtoChatMessageResponse>(
+        `${BFF_BASE}/api/vto/sessions/${sessionId}/select`,
+        {
+          method: "POST",
+          body: JSON.stringify({ selection_index: selectionIndex }),
+        }
+      );
+    },
+
+    async uploadPhoto(sessionId: string, file: File): Promise<VtoPhotoUploadResponse> {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${BFF_BASE}/api/vto/sessions/${sessionId}/photo`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Photo upload failed: ${res.status}`);
+      }
+      return res.json() as Promise<VtoPhotoUploadResponse>;
+    },
+
+    async generateTryOn(sessionId: string, confirm: boolean = true): Promise<VtoTryOnResult> {
+      return fetchJson<VtoTryOnResult>(
+        `${BFF_BASE}/api/vto/sessions/${sessionId}/generate`,
+        {
+          method: "POST",
+          body: JSON.stringify({ confirm }),
+        }
+      );
+    },
+
+    async getResult(sessionId: string): Promise<VtoTryOnResult> {
+      return fetchJson<VtoTryOnResult>(`${BFF_BASE}/api/vto/sessions/${sessionId}/result`);
+    },
+
+    async deleteSession(sessionId: string): Promise<any> {
+      return fetchJson(`${BFF_BASE}/api/vto/sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+    },
+
+    async getUcpCheckout(productId: string): Promise<any> {
+      try {
+        return await fetchJson(`${BFF_BASE}/api/vto/ucp/checkout/${productId}`);
+      } catch (err) {
+        return {
+          ucp_version: "2026-01-11",
+          checkout_session_id: `ucp-chk-${Math.random().toString(36).substring(2, 9)}`,
+          protocol: "dev.ucp.shopping.checkout",
+          merchant: {
+            merchant_id: "merchant_vitrine_haute_couture",
+            name: "VITRINE Autonomous Commerce",
+            domain: "vitrine-merchant-commerce.web.app",
+          },
+          order: {
+            currency: "USD",
+            items: [
+              {
+                item_id: productId,
+                title: "Selected Garment Item",
+                quantity: 1,
+                unit_price: 128.0,
+              },
+            ],
+            totals: {
+              subtotal: 128.0,
+              shipping: 8.5,
+              total: 136.5,
+            },
+          },
+          payment_handler: {
+            handler_id: "google_pay_ap2_mandate",
+            settlement_type: "autonomous_cryptographic_escrow",
+            mandate_state: "READY_FOR_BUYER_SIGNATURE",
+          },
+        };
+      }
+    },
   },
 };

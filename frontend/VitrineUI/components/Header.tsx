@@ -15,6 +15,7 @@ import {
   Globe,
   Radio,
   Lock,
+  Shirt,
 } from "lucide-react";
 import { api } from "../api";
 import { ServiceHealth } from "../types";
@@ -24,6 +25,7 @@ export type NavTab =
   | "tower"
   | "theatre"
   | "brain"
+  | "vto"
   | "promise"
   | "fraud"
   | "ledger"
@@ -117,6 +119,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
               ? "bg-[#2D6A4F]/10 text-[#2D6A4F] border-[#2D6A4F]/20"
               : "bg-[#B7791F]/10 text-[#B7791F] border-[#B7791F]/20",
           icon: Sparkles,
+        },
+        {
+          id: "vto" as NavTab,
+          label: "Virtual Try-On Studio",
+          sub: "Live Vertex AI Fit Studio",
+          badge: "Live Model",
+          badgeColor: "bg-[#7A2E3B]/10 text-[#7A2E3B] border-[#7A2E3B]/20",
+          icon: Shirt,
         },
         {
           id: "promise" as NavTab,

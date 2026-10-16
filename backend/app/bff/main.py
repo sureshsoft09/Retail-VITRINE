@@ -43,6 +43,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from backend.app.vto.router import router as vto_router
+app.include_router(vto_router, prefix="/api/vto")
+app.include_router(vto_router, prefix="")
+
 import logging
 import httpx
 logger = logging.getLogger("vitrine-bff")

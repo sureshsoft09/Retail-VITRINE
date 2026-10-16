@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retail AI Virtual Try-On Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .chat-bubble { animation: fadeIn 0.25s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .typing-dots span {
+      animation: blink 1.4s infinite both;
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      margin: 0 1px;
+      background-color: #818cf8;
+      border-radius: 50%;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header Navigation -->
+  <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-3">
+      <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg">
+        <i class="fa-solid fa-shirt text-white text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-white tracking-wide">Retail Virtual Try-On AI Studio</h1>
+        <p class="text-xs text-indigo-400 font-medium">Powered by Gemini 3.8 Flash & Vertex AI virtual-try-on-001</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="openUCPModal()" class="bg-indigo-900/60 hover:bg-indigo-800 text-indigo-300 hover:text-white border border-indigo-600/60 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow">
+        <i class="fa-solid fa-code"></i>
+        <span>UCP Protocol</span>
+      </button>
+      <div id="sessionBadge" class="bg-slate-700/80 px-4 py-1.5 rounded-full border border-slate-600 text-xs font-mono text-slate-300 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Session: <span id="sessionIdText" class="text-indigo-400 font-semibold">Not Started</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Container -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto w-full">
+
+    <!-- Left Column: Conversational Retail Agent & Product Selection Gallery (7 Cols) -->
+    <section class="lg:col-span-7 bg-slate-800 rounded-2xl border border-slate-700 flex flex-col shadow-xl overflow-hidden">
+      <!-- Header with Dual-Mode Tabs & Session Action -->
+      <div class="bg-slate-800/90 border-b border-slate-700 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <!-- Dual Mode Switcher Tabs -->
+        <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 shadow-inner">
+          <button id="tabChatBtn" onclick="switchMode('chat')"
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow">
+            <i class="fa-solid fa-comments"></i>
+            <span>Chat Assistant</span>
+          </button>
+          <button id="tabCatalogBtn" onclick="switchMode('catalog')"
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>Browse Catalog</span>
+            <span id="catalogBadge" class="bg-slate-800 border border-slate-600 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">10</span>
+          </button>
+        </div>
+
+        <button onclick="startNewSession()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium px-3 py-1.5 rounded-lg transition-colors border border-slate-600 shadow flex items-center gap-1.5">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>New Session</span>
+        </button>
+      </div>
+
+      <!-- Mode 1: Chat Assistant View -->
+      <div id="chatSection" class="flex-1 flex flex-col overflow-hidden">
+        <!-- Chat Messages Scroll Container -->
+        <div id="chatBox" class="flex-1 p-4 space-y-4 overflow-y-auto max-h-[520px]">
+          <!-- Helpful Catalog Quick Jump Banner -->
+          <div class="bg-indigo-950/30 border border-indigo-700/50 rounded-xl p-3 text-xs text-indigo-200 flex items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-tags text-indigo-400 text-sm"></i>
+              <span>Prefer to choose directly from the catalog?</span>
+            </div>
+            <button onclick="switchMode('catalog')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg text-[11px] transition-colors shadow flex items-center gap-1.5 flex-shrink-0">
+              <i class="fa-solid fa-list-ul"></i>
+              <span>Open Catalog List</span>
+            </button>
+          </div>
+
+          <div class="chat-bubble bg-slate-700/60 text-slate-200 p-3.5 rounded-2xl max-w-[85%] border border-slate-600/50 text-xs leading-relaxed">
+            Welcome to Retail AI Virtual Try-On! What kind of apparel are you looking for today? (e.g. <em>"I want a yellow round-neck short-sleeve T-shirt"</em> or <em>"Show me hoodies"</em>)
+          </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="p-4 border-t border-slate-700 bg-slate-800/80 flex gap-2">
+          <input id="userInput" type="text" placeholder="Type your apparel request (e.g., 'Yellow round neck T-shirt')..."
+                 class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                 onkeypress="if(event.key === 'Enter') sendMessage()">
+          <button id="sendBtn" onclick="sendMessage()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span id="sendBtnText">Send</span>
+            <i id="sendBtnIcon" class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mode 2: Browse Catalog List View -->
+      <div id="catalogSection" class="hidden flex-1 flex flex-col overflow-hidden">
+        <!-- Catalog Search and Filter Toolbar -->
+        <div class="p-3 border-b border-slate-700 bg-slate-800/95 flex flex-wrap items-center justify-between gap-2.5">
+          <div class="relative flex-1 min-w-[180px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input id="catalogSearchInput" type="text" placeholder="Search by name, color, style..."
+                   oninput="filterCatalog()"
+                   class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+          <!-- Category Filter Buttons -->
+          <div class="flex items-center gap-1.5 text-[11px]">
+            <button class="cat-pill active px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold transition-colors" onclick="filterCategory('all', this)">All</button>
+            <button class="cat-pill px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors font-medium" onclick="filterCategory('t-shirt', this)">T-Shirts</button>
+            <button class="cat-pill px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors font-medium" onclick="filterCategory('shirt', this)">Shirts</button>
+            <button class="cat-pill px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors font-medium" onclick="filterCategory('hoodie', this)">Hoodies</button>
+          </div>
+        </div>
+
+        <!-- Catalog Status Bar -->
+        <div class="px-4 py-2 bg-slate-900/60 border-b border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
+          <div>Showing <span id="catalogVisibleCount" class="text-indigo-300 font-bold">10</span> products from inventory</div>
+          <div class="text-[10px] text-slate-500 italic">Click "Select for Try-On" on any garment</div>
+        </div>
+
+        <!-- Catalog Grid Container -->
+        <div id="catalogGrid" class="flex-1 p-4 overflow-y-auto max-h-[520px] min-h-[420px] grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-indigo-500 text-3xl"></i>
+            <p class="text-xs font-medium">Loading inventory garments...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Image Upload & AI Try-On Canvas (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+
+      <!-- Selected Garment Banner -->
+      <div id="selectedGarmentBanner" class="hidden bg-indigo-950/40 border border-indigo-700/60 p-3.5 rounded-2xl flex items-center gap-3 shadow-lg">
+        <div class="w-14 h-14 rounded-xl border border-indigo-500/50 bg-slate-900 flex-shrink-0 shadow relative overflow-hidden flex items-center justify-center">
+          <img id="selectedGarmentImg" alt="Selected Product" onerror="handleProductImgError(this)" onload="handleProductImgLoad(this)" class="w-full h-full object-cover">
+          <div class="no-img-badge hidden w-full h-full flex flex-col items-center justify-center bg-slate-950 text-slate-500 text-center p-1">
+            <i class="fa-regular fa-image text-base text-slate-600"></i>
+            <span class="text-[8px] font-medium text-slate-400">No image</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Selected Garment</p>
+          <h4 id="selectedGarmentName" class="font-bold text-slate-100 text-xs truncate"></h4>
+          <p id="selectedGarmentDetails" class="text-[11px] text-slate-300 font-medium"></p>
+        </div>
+        <button onclick="openUCPModal()" title="View UCP Checkout Protocol JSON" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition-colors shadow flex items-center gap-1 flex-shrink-0">
+          <i class="fa-solid fa-code"></i>
+          <span>UCP JSON</span>
+        </button>
+      </div>
+
+      <!-- Step A: Person Photo Upload Panel -->
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 p-5 shadow-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+          <h3 class="font-semibold text-slate-200 flex items-center gap-2 text-xs">
+            <i class="fa-solid fa-camera text-indigo-400"></i> Step 1: Upload Your Photo
+          </h3>
+          <span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-700 px-2 py-0.5 rounded">JPEG / PNG</span>
+        </div>
+
+        <div class="flex gap-4 items-center">
+          <div id="uploadDropzone" class="flex-1 border-2 border-dashed border-slate-600 hover:border-indigo-500 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-900/50" onclick="document.getElementById('photoInput').click()">
+            <input type="file" id="photoInput" accept="image/jpeg,image/png" class="hidden" onchange="uploadPhoto(event)">
+            <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-400 mb-1"></i>
+            <p id="uploadTitle" class="text-xs text-slate-300 font-medium">Click to upload photo</p>
+            <p id="uploadSubtitle" class="text-[10px] text-slate-500">Single person, front pose</p>
+          </div>
+
+          <!-- Person Photo Preview Thumbnail Box -->
+          <div id="personPreviewBox" class="hidden flex flex-col items-center">
+            <img id="personPhotoPreview" src="" alt="Uploaded Photo Preview" class="w-20 h-24 object-cover rounded-xl border border-indigo-500/60 shadow-lg bg-slate-900">
+            <span class="text-[10px] text-emerald-400 font-medium mt-1">Uploaded</span>
+          </div>
+        </div>
+
+        <div id="photoStatus" class="hidden text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800 p-2.5 rounded-lg flex items-center gap-2">
+          <i id="photoStatusIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+          <span id="photoStatusText">Photo validated & uploaded.</span>
+        </div>
+
+        <!-- Try-On Photo Guidance Tip -->
+        <div class="text-[11px] text-slate-400 bg-slate-900/60 border border-slate-700/60 rounded-lg p-2 flex items-start gap-2">
+          <i class="fa-solid fa-circle-info text-indigo-400 mt-0.5 flex-shrink-0"></i>
+          <span><strong>Best Results:</strong> Wear a basic fitted t-shirt or top with arms relaxed at your sides. Avoid shirtless photos or holding a phone in front of your chest.</span>
+        </div>
+      </div>
+
+      <!-- Step B: AI Try-On Result Preview Canvas -->
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 p-5 shadow-xl flex-1 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+          <h3 class="font-semibold text-slate-200 flex items-center gap-2 text-xs">
+            <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> Step 2: Virtual Try-On Result
+          </h3>
+          <button id="generateBtn" onclick="generateTryOn()" disabled
+                  class="bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-indigo-500 text-white font-medium px-4 py-1.5 rounded-lg text-xs transition-colors shadow flex items-center gap-1.5">
+            <i id="generateBtnSpinner" class="hidden fa-solid fa-spinner fa-spin"></i>
+            <span id="generateBtnText">Generate Try-On</span>
+          </button>
+        </div>
+
+        <!-- Result Canvas Box -->
+        <div id="resultCanvas" class="flex-1 min-h-[280px] bg-slate-900 rounded-xl border border-slate-700 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+          <div id="canvasPlaceholder" class="flex flex-col items-center text-slate-500">
+            <i class="fa-solid fa-user-astronaut text-4xl mb-3 text-slate-600"></i>
+            <p class="text-xs">Select a garment and upload your photo to generate virtual try-on.</p>
+          </div>
+          <img id="tryOnImage" class="hidden max-h-[360px] object-contain rounded-lg shadow-2xl border border-slate-700" alt="Virtual Try-On Result">
+        </div>
+
+        <!-- Smart Fit & Size Recommendation Card -->
+        <div id="disclaimerBox" class="hidden bg-slate-800/95 border border-indigo-500/40 p-4 rounded-xl space-y-2.5 shadow-xl">
+          <div class="flex items-center justify-between gap-2 border-b border-slate-700/80 pb-2">
+            <div class="flex items-center gap-2">
+              <div class="bg-indigo-600/30 text-indigo-400 p-1.5 rounded-lg border border-indigo-500/40">
+                <i class="fa-solid fa-ruler-combined text-xs"></i>
+              </div>
+              <span class="text-xs font-bold text-white tracking-wide">Smart Fit & Size Recommendation</span>
+            </div>
+            <span id="recommendedSizeBadge" class="bg-emerald-600 text-white font-bold text-xs px-2.5 py-0.5 rounded-full shadow flex items-center gap-1">
+              <i class="fa-solid fa-star text-[9px] text-amber-300"></i>
+              <span>Size M (Recommended)</span>
+            </span>
+          </div>
+
+          <p id="fitAdviceText" class="text-slate-300 text-[11px] leading-relaxed">
+            Based on standard proportions and this garment's cut, <strong>Medium (M)</strong> offers the most balanced, true-to-body fit. If you prefer a relaxed drape, consider sizing up to Large (L).
+          </p>
+
+          <!-- Interactive Size Breakdown Pills -->
+          <div id="sizePillsContainer" class="flex flex-wrap items-center gap-1.5 pt-1 text-[10px]">
+            <span class="px-2 py-0.5 rounded bg-slate-700/90 text-slate-300 border border-slate-600">S: Snug Fit</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500 font-bold">M: Recommended ⭐</span>
+            <span class="px-2 py-0.5 rounded bg-slate-700/90 text-slate-300 border border-slate-600">L: Relaxed Fit</span>
+            <span class="px-2 py-0.5 rounded bg-slate-700/90 text-slate-300 border border-slate-600">XL: Oversized</span>
+          </div>
+
+          <!-- AI Fit Disclaimer -->
+          <div class="pt-2 border-t border-slate-700/80 text-[10px] text-amber-300/80 leading-relaxed flex items-start gap-1.5">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-400 flex-shrink-0"></i>
+            <span><strong>AI Disclaimer:</strong> Virtual try-on images and size recommendations are AI-generated for style guidance. Exact fabric drape, texture, and physical fit may vary.</span>
+          </div>
+        </div>
+
+        <!-- UCP Agent Checkout Call-to-Action -->
+        <div id="ucpTryOnAction" class="hidden bg-indigo-950/50 border border-indigo-600/50 p-3 rounded-xl flex items-center justify-between gap-3 shadow">
+          <div class="text-[11px] text-slate-300">
+            <span class="text-indigo-300 font-bold flex items-center gap-1.5"><i class="fa-solid fa-cart-shopping"></i> Ready to Buy?</span>
+            <span class="text-slate-400 text-[10px]">Instant purchase via Universal Commerce Protocol</span>
+          </div>
+          <button onclick="openUCPModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow flex items-center gap-1.5 flex-shrink-0">
+            <i class="fa-solid fa-code"></i>
+            <span>Agent Checkout JSON</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- UCP Protocol Inspector Modal Dialog -->
+  <div id="ucpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <!-- Modal Header -->
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 p-2.5 rounded-xl">
+            <i class="fa-solid fa-cubes-stacked text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              Universal Commerce Protocol (UCP) Inspector
+              <span class="bg-indigo-900/80 text-indigo-300 text-[10px] px-2 py-0.5 rounded border border-indigo-700 font-mono">v2026-01-11</span>
+            </h3>
+            <p class="text-[11px] text-slate-400">Agentic Commerce Capability: <code class="text-indigo-300 font-mono">dev.ucp.shopping.checkout</code></p>
+          </div>
+        </div>
+        <button onclick="closeUCPModal()" class="text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-slate-800 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="bg-slate-950/60 border-b border-slate-800 px-6 py-2 flex items-center gap-2 overflow-x-auto text-xs">
+        <button id="ucpTab1Btn" onclick="switchUCPTab('discovery')"
+                class="px-3.5 py-1.5 rounded-lg font-semibold transition-all bg-indigo-600 text-white flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-compass"></i>
+          <span>1. Discovery Manifest (/.well-known/ucp)</span>
+        </button>
+        <button id="ucpTab2Btn" onclick="switchUCPTab('request')"
+                class="px-3.5 py-1.5 rounded-lg font-semibold transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>2. Agent Request Payload</span>
+        </button>
+        <button id="ucpTab3Btn" onclick="switchUCPTab('response')"
+                class="px-3.5 py-1.5 rounded-lg font-semibold transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-receipt"></i>
+          <span>3. Checkout Session Response</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="flex-1 p-5 overflow-y-auto bg-slate-950 flex flex-col gap-2">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px]">
+          <span id="ucpTabDescription" class="text-slate-400 font-medium">Business Capability Manifest profile advertised to AI agents</span>
+          <div class="flex items-center gap-2">
+            <span id="ucpStatusBadge" class="bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded text-[10px] font-mono font-bold">200 OK</span>
+            <button onclick="copyUCPJson()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded text-[11px] font-medium border border-slate-700 transition-colors flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i>
+              <span id="copyJsonText">Copy JSON</span>
+            </button>
+          </div>
+        </div>
+        <pre id="ucpJsonDisplay" class="text-xs font-mono text-indigo-200 bg-slate-900/95 p-4 rounded-xl border border-slate-800 overflow-x-auto max-h-[380px] leading-relaxed select-all">Loading...</pre>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-800 border-t border-slate-700 px-6 py-3.5 flex items-center justify-between text-xs">
+        <span class="text-slate-400 text-[11px]">
+          Target Garment: <strong id="ucpModalTargetItem" class="text-indigo-300 font-mono">TSHIRT-1001</strong>
+        </span>
+        <div class="flex items-center gap-3">
+          <button onclick="simulateUCPCheckout()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-play text-[10px]"></i>
+            <span>Simulate Agent Checkout</span>
+          </button>
+          <button onclick="closeUCPModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3.5 py-1.5 rounded-lg transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSessionId = null;
+    let allCatalogProducts = [];
+    let activeCategory = 'all';
+    let selectedProductId = null;
+    let personPhotoUploaded = false;
+
+    function updateGenerateButtonState() {
+      const hasProduct = !!selectedProductId;
+      const hasPhoto = !!personPhotoUploaded;
+      const genBtn = document.getElementById('generateBtn');
+      if (genBtn) {
+        genBtn.disabled = !(hasProduct && hasPhoto);
+      }
+    }
+
+    function handleProductImgError(img) {
+      if (!img) return;
+      const src = img.getAttribute('src');
+      if (!src || src.trim() === '' || src === window.location.href) return;
+
+      img.onerror = null;
+      img.style.display = 'none';
+      const parent = img.parentElement;
+      if (parent) {
+        const badge = parent.querySelector('.no-img-badge');
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.style.display = 'flex';
+        }
+      }
+    }
+
+    function handleProductImgLoad(img) {
+      if (!img) return;
+      img.style.display = 'block';
+      img.classList.remove('hidden');
+      const parent = img.parentElement;
+      if (parent) {
+        const badge = parent.querySelector('.no-img-badge');
+        if (badge) {
+          badge.classList.add('hidden');
+          badge.style.display = 'none';
+        }
+      }
+    }
+
+    function switchMode(mode) {
+      const chatSection = document.getElementById('chatSection');
+      const catalogSection = document.getElementById('catalogSection');
+      const tabChatBtn = document.getElementById('tabChatBtn');
+      const tabCatalogBtn = document.getElementById('tabCatalogBtn');
+
+      if (mode === 'chat') {
+        chatSection.classList.remove('hidden');
+        catalogSection.classList.add('hidden');
+        tabChatBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow";
+        tabCatalogBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
+      } else {
+        chatSection.classList.add('hidden');
+        catalogSection.classList.remove('hidden');
+        tabCatalogBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow";
+        tabChatBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200";
+        if (allCatalogProducts.length === 0) {
+          loadCatalog();
+        } else {
+          renderCatalog(allCatalogProducts);
+        }
+      }
+    }
+
+    async function loadCatalog() {
+      const grid = document.getElementById('catalogGrid');
+      if (!allCatalogProducts || allCatalogProducts.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-indigo-500 text-3xl"></i>
+            <p class="text-xs font-medium">Loading inventory garments...</p>
+          </div>
+        `;
+      }
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch('/api/products', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error("Server responded with HTTP " + res.status);
+        allCatalogProducts = await res.json();
+        
+        const count = allCatalogProducts.length;
+        document.getElementById('catalogBadge').innerText = count;
+        document.getElementById('catalogVisibleCount').innerText = count;
+        renderCatalog(allCatalogProducts);
+      } catch (err) {
+        console.error("Error loading product catalog:", err);
+        grid.innerHTML = `
+          <div class="col-span-full p-8 text-center text-slate-400">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-2xl mb-2"></i>
+            <p class="text-xs">Unable to load catalog from server (${err.message || err}).</p>
+            <button onclick="loadCatalog()" class="mt-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3.5 py-1.5 rounded-lg shadow font-medium transition-colors">
+              <i class="fa-solid fa-rotate-right mr-1.5"></i>Retry Loading
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function renderCatalog(products) {
+      const grid = document.getElementById('catalogGrid');
+      if (!products || products.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400">
+            <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-600"></i>
+            <p class="text-xs">No garments found matching your filter or search criteria.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = products.map((p) => {
+        const isSelected = selectedProductId === p.product_id;
+        const imgUrl = p.product_image_url || `/api/products/${p.product_id}/image`;
+        const sizeText = Array.isArray(p.size) ? p.size.join(', ') : p.size;
+
+        return `
+          <div id="card-${p.product_id}" data-product-id="${p.product_id}" data-category="${(p.category || '').toLowerCase()}"
+               class="catalog-card bg-slate-900/90 rounded-xl border ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/50 bg-indigo-950/20' : 'border-slate-700/80 hover:border-indigo-500/80'} p-3 flex flex-col justify-between transition-all duration-200 shadow group">
+            
+            <!-- Product Image Preview with Badges -->
+            <div class="relative overflow-hidden rounded-lg bg-slate-950 aspect-[4/3] flex items-center justify-center border border-slate-800 mb-2.5">
+              <img src="${imgUrl}" alt="${p.product_name}"
+                   onerror="handleProductImgError(this)"
+                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+              <div class="no-img-badge hidden w-full h-full flex flex-col items-center justify-center bg-slate-950 text-slate-500 p-2 text-center">
+                <i class="fa-regular fa-image text-3xl mb-1.5 text-slate-600"></i>
+                <span class="text-[11px] font-semibold text-slate-400">No Image Found</span>
+                <span class="text-[9px] text-slate-600">Not in storage bucket</span>
+              </div>
+              <span class="absolute top-2 left-2 bg-slate-900/90 backdrop-blur-sm text-indigo-300 border border-indigo-700/60 text-[10px] font-mono font-bold px-2 py-0.5 rounded shadow">
+                ${p.product_id}
+              </span>
+              <span class="absolute top-2 right-2 bg-emerald-900/90 backdrop-blur-sm text-emerald-300 border border-emerald-700/60 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                In Stock
+              </span>
+            </div>
+
+            <!-- Garment Details -->
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">${p.brand || 'Retail Studio'}</span>
+                  <span class="text-xs font-bold text-emerald-400 font-mono">${p.currency || 'INR'} ${p.price}</span>
+                </div>
+                <h4 class="text-xs font-bold text-slate-100 line-clamp-1 group-hover:text-indigo-300 transition-colors" title="${p.product_name}">
+                  ${p.product_name}
+                </h4>
+                <div class="flex flex-wrap gap-1 mt-1.5 text-[10px]">
+                  <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 capitalize text-slate-300">
+                    <i class="fa-solid fa-palette text-[9px] mr-1 text-indigo-400"></i>${p.color}
+                  </span>
+                  <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 capitalize text-slate-300">
+                    ${p.neck_type || p.category}
+                  </span>
+                </div>
+                <div class="mt-1.5 text-[10px] text-slate-400">
+                  Sizes: <span class="text-slate-300 font-medium">${sizeText}</span>
+                </div>
+              </div>
+
+              <!-- Select Action Button -->
+              <button id="btn-select-${p.product_id}" onclick="selectProduct('${p.product_id}')"
+                      class="catalog-select-btn mt-3 w-full ${isSelected ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-500'} text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors shadow flex items-center justify-center gap-1.5">
+                <i class="fa-solid ${isSelected ? 'fa-check' : 'fa-shirt'} text-[11px]"></i>
+                <span>${isSelected ? 'Selected' : 'Select for Try-On'}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterCategory(cat, btn) {
+      activeCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(b => {
+        b.className = "cat-pill px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors font-medium";
+      });
+      if (btn) {
+        btn.className = "cat-pill active px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold transition-colors";
+      }
+      filterCatalog();
+    }
+
+    function filterCatalog() {
+      const query = (document.getElementById('catalogSearchInput').value || '').trim().toLowerCase();
+      let filtered = allCatalogProducts;
+
+      if (activeCategory !== 'all') {
+        filtered = filtered.filter(p => (p.category || '').toLowerCase() === activeCategory);
+      }
+
+      if (query) {
+        filtered = filtered.filter(p => 
+          (p.product_name && p.product_name.toLowerCase().includes(query)) ||
+          (p.product_id && p.product_id.toLowerCase().includes(query)) ||
+          (p.color && p.color.toLowerCase().includes(query)) ||
+          (p.category && p.category.toLowerCase().includes(query)) ||
+          (p.neck_type && p.neck_type.toLowerCase().includes(query)) ||
+          (p.brand && p.brand.toLowerCase().includes(query))
+        );
+      }
+
+      document.getElementById('catalogVisibleCount').innerText = filtered.length;
+      renderCatalog(filtered);
+    }
+
+    async function startNewSession() {
+      try {
+        selectedProductId = null;
+        const res = await fetch('/sessions', { method: 'POST' });
+        const data = await res.json();
+        currentSessionId = data.session_id;
+        document.getElementById('sessionIdText').innerText = currentSessionId.substring(0, 8) + '...';
+        
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = `
+          <!-- Helpful Catalog Quick Jump Banner -->
+          <div class="bg-indigo-950/30 border border-indigo-700/50 rounded-xl p-3 text-xs text-indigo-200 flex items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-tags text-indigo-400 text-sm"></i>
+              <span>Prefer to choose directly from the catalog?</span>
+            </div>
+            <button onclick="switchMode('catalog')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg text-[11px] transition-colors shadow flex items-center gap-1.5 flex-shrink-0">
+              <i class="fa-solid fa-list-ul"></i>
+              <span>Open Catalog List</span>
+            </button>
+          </div>
+
+          <div class="chat-bubble bg-slate-700/60 text-slate-200 p-3.5 rounded-2xl max-w-[85%] border border-slate-600/50 text-xs leading-relaxed">
+            ${data.message || 'Welcome to Retail AI Virtual Try-On! What apparel item are you looking for?'}
+          </div>
+        `;
+        document.getElementById('tryOnImage').classList.add('hidden');
+        document.getElementById('canvasPlaceholder').classList.remove('hidden');
+        document.getElementById('disclaimerBox').classList.add('hidden');
+        document.getElementById('photoStatus').classList.add('hidden');
+        document.getElementById('personPreviewBox').classList.add('hidden');
+        document.getElementById('selectedGarmentBanner').classList.add('hidden');
+        const garmentImg = document.getElementById('selectedGarmentImg');
+        if (garmentImg) {
+          garmentImg.removeAttribute('src');
+          garmentImg.style.display = 'block';
+          const garmentBadge = garmentImg.parentElement.querySelector('.no-img-badge');
+          if (garmentBadge) {
+            garmentBadge.classList.add('hidden');
+            garmentBadge.style.display = 'none';
+          }
+        }
+        selectedProductId = null;
+        personPhotoUploaded = false;
+        const photoInput = document.getElementById('personPhotoInput');
+        if (photoInput) photoInput.value = '';
+        updateGenerateButtonState();
+
+        if (allCatalogProducts.length > 0) {
+          renderCatalog(allCatalogProducts);
+        }
+      } catch (err) {
+        alert("Failed to start new session: " + err);
+      }
+    }
+
+    function showChatLoader(messageText = "Stylist AI is searching inventory...") {
+      const chatBox = document.getElementById('chatBox');
+      const loaderDiv = document.createElement('div');
+      loaderDiv.id = 'chatLoader';
+      loaderDiv.className = 'flex justify-start';
+      loaderDiv.innerHTML = `
+        <div class="chat-bubble bg-slate-700/80 text-slate-300 p-3.5 rounded-2xl max-w-[85%] border border-slate-600 rounded-tl-none shadow flex items-center gap-3">
+          <i class="fa-solid fa-circle-notch fa-spin text-indigo-400 text-sm"></i>
+          <span class="text-xs font-medium text-slate-300">${messageText}</span>
+          <div class="typing-dots ml-1"><span></span><span></span><span></span></div>
+        </div>
+      `;
+      chatBox.appendChild(loaderDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      document.getElementById('userInput').disabled = true;
+      document.getElementById('sendBtn').disabled = true;
+      document.getElementById('sendBtnText').innerText = "Processing...";
+      document.getElementById('sendBtnIcon').className = "fa-solid fa-spinner fa-spin text-xs";
+    }
+
+    function hideChatLoader() {
+      const loaderDiv = document.getElementById('chatLoader');
+      if (loaderDiv) {
+        loaderDiv.remove();
+      }
+
+      document.getElementById('userInput').disabled = false;
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('sendBtnText').innerText = "Send";
+      document.getElementById('sendBtnIcon').className = "fa-solid fa-paper-plane text-xs";
+      document.getElementById('userInput').focus();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (!currentSessionId) {
+        await startNewSession();
+      }
+
+      appendMessage('user', text);
+      input.value = '';
+
+      showChatLoader("Analyzing query & searching catalogue...");
+
+      try {
+        const res = await fetch(`/sessions/${currentSessionId}/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        hideChatLoader();
+        
+        const messageText = data.message || data.agent_message || data.detail || 'Here are the matching products:';
+        let replyHtml = `<p class="whitespace-pre-line mb-2">${messageText}</p>`;
+        const products = data.matching_products || data.products || [];
+        if (products.length > 0) {
+          replyHtml += `<div class="mt-3 space-y-3">`;
+          products.forEach((p, idx) => {
+            const imgUrl = p.product_image_url || `/api/products/${p.product_id}/image`;
+            replyHtml += `
+              <div class="bg-slate-800 p-3 rounded-xl border border-slate-600 flex items-center gap-3 shadow hover:border-indigo-500 transition-colors">
+                <div class="w-16 h-16 rounded-lg bg-slate-900 border border-slate-700 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+                  <img src="${imgUrl}" alt="${p.product_name}" onerror="handleProductImgError(this)" class="w-full h-full object-cover">
+                  <div class="no-img-badge hidden w-full h-full flex flex-col items-center justify-center bg-slate-950 text-slate-500 text-center p-1">
+                    <i class="fa-regular fa-image text-base text-slate-600 mb-0.5"></i>
+                    <span class="text-[8px] font-medium text-slate-400 leading-tight">No image</span>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-bold text-indigo-300 text-xs truncate">${idx + 1}. ${p.product_name}</p>
+                  <p class="text-[11px] text-slate-300 font-semibold mt-0.5">${p.currency} ${p.price}</p>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Color: <span class="text-slate-200 capitalize">${p.color}</span> | Style: <span class="text-slate-200 capitalize">${p.neck_type || 'Standard'}</span></p>
+                  <p class="text-[10px] text-slate-400">Sizes: ${Array.isArray(p.size) ? p.size.join(', ') : p.size}</p>
+                </div>
+                <button id="btn-select-${p.product_id}" onclick="selectProduct('${p.product_id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold px-3 py-2 rounded-lg transition-colors shadow flex-shrink-0 flex items-center gap-1">
+                  <span>Select</span>
+                  <i class="fa-solid fa-check text-[10px]"></i>
+                </button>
+              </div>
+            `;
+          });
+          replyHtml += `</div>`;
+        }
+        appendMessage('agent', replyHtml);
+      } catch (err) {
+        hideChatLoader();
+        appendMessage('agent', "Error processing message: " + err);
+      }
+    }
+
+    async function selectProduct(productId) {
+      if (!currentSessionId) {
+        await startNewSession();
+      }
+
+      selectedProductId = productId;
+
+      // Update any button in DOM for this product
+      const btns = document.querySelectorAll(`.btn-select-${productId}, #btn-select-${productId}`);
+      btns.forEach(b => {
+        b.disabled = true;
+        b.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[10px]"></i> <span>Selecting...</span>`;
+      });
+
+      showChatLoader(`Selecting garment ${productId}...`);
+
+      try {
+        const res = await fetch(`/sessions/${currentSessionId}/select`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selection_index: productId })
+        });
+        const data = await res.json();
+        hideChatLoader();
+
+        const messageText = data.message || data.agent_message || data.detail || `Selected garment ${productId}.`;
+        appendMessage('agent', messageText);
+
+        const products = data.matching_products || data.products || [];
+        if (products.length > 0) {
+          const selected = products[0];
+          window.currentSelectedGarment = selected;
+          ucpCheckoutResponseData = null;
+          document.getElementById('selectedGarmentBanner').classList.remove('hidden');
+          const garmentImg = document.getElementById('selectedGarmentImg');
+          const garmentBadge = garmentImg.parentElement.querySelector('.no-img-badge');
+          if (garmentBadge) {
+            garmentBadge.classList.add('hidden');
+            garmentBadge.style.display = 'none';
+          }
+          garmentImg.style.display = 'block';
+          garmentImg.classList.remove('hidden');
+          garmentImg.onerror = function() { handleProductImgError(this); };
+          garmentImg.onload = function() { handleProductImgLoad(this); };
+          garmentImg.src = selected.product_image_url || `/api/products/${selected.product_id}/image`;
+          document.getElementById('selectedGarmentName').innerText = selected.product_name + ' (' + selected.product_id + ')';
+          document.getElementById('selectedGarmentDetails').innerText = selected.currency + ' ' + selected.price + ' | ' + selected.color + ' | ' + (selected.neck_type || 'Standard');
+        }
+
+        // Highlight selected card and sync buttons across both catalog and chat views
+        document.querySelectorAll('.catalog-card').forEach(card => {
+          const cardId = card.getAttribute('data-product-id');
+          const cardBtn = card.querySelector('.catalog-select-btn');
+          if (cardId === productId) {
+            card.classList.add('border-indigo-500', 'ring-2', 'ring-indigo-500/50', 'bg-indigo-950/20');
+            card.classList.remove('border-slate-700/80');
+            if (cardBtn) {
+              cardBtn.disabled = false;
+              cardBtn.className = "catalog-select-btn mt-3 w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors shadow flex items-center justify-center gap-1.5";
+              cardBtn.innerHTML = `<i class="fa-solid fa-check text-[11px]"></i> <span>Selected</span>`;
+            }
+          } else {
+            card.classList.remove('border-indigo-500', 'ring-2', 'ring-indigo-500/50', 'bg-indigo-950/20');
+            card.classList.add('border-slate-700/80');
+            if (cardBtn) {
+              cardBtn.disabled = false;
+              cardBtn.className = "catalog-select-btn mt-3 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors shadow flex items-center justify-center gap-1.5";
+              cardBtn.innerHTML = `<i class="fa-solid fa-shirt text-[11px]"></i> <span>Select for Try-On</span>`;
+            }
+          }
+        });
+
+        // Also update any chat cards
+        btns.forEach(b => {
+          if (!b.classList.contains('catalog-select-btn')) {
+            b.disabled = false;
+            b.innerHTML = `<span>Selected</span> <i class="fa-solid fa-check text-[10px]"></i>`;
+            b.classList.remove('bg-indigo-600');
+            b.classList.add('bg-emerald-600');
+          }
+        });
+
+        updateGenerateButtonState();
+      } catch (err) {
+        hideChatLoader();
+        btns.forEach(b => {
+          b.disabled = false;
+          b.innerHTML = `<span>Select</span> <i class="fa-solid fa-check text-[10px]"></i>`;
+        });
+        alert("Error selecting product: " + err);
+      }
+    }
+
+    async function uploadPhoto(event) {
+      if (!currentSessionId) {
+        await startNewSession();
+      }
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('personPhotoPreview').src = e.target.result;
+        document.getElementById('personPreviewBox').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+
+      const photoStatus = document.getElementById('photoStatus');
+      const photoStatusText = document.getElementById('photoStatusText');
+      const photoStatusIcon = document.getElementById('photoStatusIcon');
+      photoStatus.classList.remove('hidden');
+      photoStatusText.innerText = "Validating and uploading photo to Cloud Storage...";
+      photoStatusIcon.className = "fa-solid fa-spinner fa-spin text-indigo-400";
+
+      showChatLoader("Validating photo pose, resolution & uploading to GCS...");
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch(`/sessions/${currentSessionId}/photo`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await res.json();
+        hideChatLoader();
+        
+        const messageText = data.message || data.detail || 'Photo uploaded and validated successfully!';
+        if (res.ok && (data.status === "VALIDATED" || data.is_valid || data.person_image_gcs_uri)) {
+          personPhotoUploaded = true;
+          photoStatusText.innerText = "Photo validated & uploaded: " + file.name;
+          photoStatusIcon.className = "fa-solid fa-circle-check text-emerald-400";
+          appendMessage('agent', messageText);
+          updateGenerateButtonState();
+        } else {
+          personPhotoUploaded = false;
+          photoStatusText.innerText = "Photo validation failed: " + messageText;
+          photoStatusIcon.className = "fa-solid fa-triangle-exclamation text-amber-400";
+          alert("Photo validation failed: " + messageText);
+          updateGenerateButtonState();
+        }
+      } catch (err) {
+        hideChatLoader();
+        alert("Error uploading photo: " + err);
+      }
+    }
+
+    async function generateTryOn() {
+      if (!currentSessionId) {
+        alert("Please start a session first.");
+        return;
+      }
+
+      if (!selectedProductId && !personPhotoUploaded) {
+        alert("Please select a garment from the catalogue and upload your photo before generating try-on.");
+        return;
+      }
+      if (!selectedProductId) {
+        alert("Please select an apparel item from the catalogue or chat first.");
+        return;
+      }
+      if (!personPhotoUploaded) {
+        alert("Please upload your person photo first.");
+        return;
+      }
+
+      const genBtn = document.getElementById('generateBtn');
+      const genSpinner = document.getElementById('generateBtnSpinner');
+      const genText = document.getElementById('generateBtnText');
+
+      genBtn.disabled = true;
+      genSpinner.classList.remove('hidden');
+      genText.innerText = "Generating...";
+
+      showChatLoader("Invoking Vertex AI virtual-try-on-001 model...");
+
+      document.getElementById('canvasPlaceholder').innerHTML = `
+        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-400 mb-3"></i>
+        <p class="text-xs text-indigo-300 font-medium animate-pulse">Generating Virtual Try-On with Vertex AI...</p>
+        <p class="text-[10px] text-slate-500 mt-1">Recontextualizing garment onto person photo</p>
+      `;
+
+      try {
+        const res = await fetch(`/sessions/${currentSessionId}/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: true })
+        });
+        const data = await res.json();
+        hideChatLoader();
+
+        genBtn.disabled = false;
+        genSpinner.classList.add('hidden');
+        genText.innerText = "Generate Try-On";
+
+        const messageText = data.message || data.detail || 'Your Virtual Try-On visualization is ready!';
+        const imageUrl = data.try_on_image_url || data.signed_image_url;
+
+        if (imageUrl) {
+          const img = document.getElementById('tryOnImage');
+          img.src = imageUrl;
+          img.classList.remove('hidden');
+          document.getElementById('canvasPlaceholder').classList.add('hidden');
+          
+          // Populate Smart Size Recommendation Card
+          const disclaimerBox = document.getElementById('disclaimerBox');
+          if (disclaimerBox) {
+            disclaimerBox.classList.remove('hidden');
+            const sizeBadge = document.getElementById('recommendedSizeBadge');
+            const fitText = document.getElementById('fitAdviceText');
+            const pillsContainer = document.getElementById('sizePillsContainer');
+            
+            if (data.recommended_size && sizeBadge) {
+              sizeBadge.innerHTML = `<i class="fa-solid fa-star text-[9px] text-amber-300"></i> <span>Size ${data.recommended_size} (Recommended)</span>`;
+            }
+            if (data.fit_note && fitText) {
+              fitText.innerHTML = data.fit_note.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            }
+            if (data.size_breakdown && pillsContainer) {
+              pillsContainer.innerHTML = Object.entries(data.size_breakdown).map(([sz, desc]) => {
+                const isRec = sz === data.recommended_size;
+                return `
+                  <span class="px-2 py-0.5 rounded ${isRec ? 'bg-emerald-950 text-emerald-300 border border-emerald-500 font-bold shadow-sm' : 'bg-slate-700/90 text-slate-300 border border-slate-600'}">
+                    ${sz}: ${desc}
+                  </span>
+                `;
+              }).join('');
+            }
+          }
+
+          const ucpAction = document.getElementById('ucpTryOnAction');
+          if (ucpAction) ucpAction.classList.remove('hidden');
+          appendMessage('agent', messageText);
+        } else {
+          alert("Try-On Generation: " + messageText);
+        }
+      } catch (err) {
+        hideChatLoader();
+        genBtn.disabled = false;
+        genSpinner.classList.add('hidden');
+        genText.innerText = "Generate Try-On";
+        alert("Error generating try-on: " + err);
+      }
+    }
+
+    // Universal Commerce Protocol (UCP) Client State & Handlers
+    let ucpActiveTab = 'discovery';
+    let ucpDiscoveryData = null;
+    let ucpCheckoutRequestData = null;
+    let ucpCheckoutResponseData = null;
+
+    async function openUCPModal() {
+      const modal = document.getElementById('ucpModal');
+      modal.classList.remove('hidden');
+
+      // Determine product to use
+      let product = window.currentSelectedGarment;
+      if (!product && allCatalogProducts && allCatalogProducts.length > 0) {
+        product = allCatalogProducts[0];
+      }
+      if (!product) {
+        product = {
+          product_id: 'TSHIRT-1001',
+          product_name: 'Classic Crewneck Graphic T-Shirt',
+          price: 1299.00
+        };
+      }
+
+      document.getElementById('ucpModalTargetItem').innerText = `${product.product_name || product.title} (${product.product_id || product.id})`;
+
+      // Prepare Agent Request Payload
+      ucpCheckoutRequestData = {
+        line_items: [
+          {
+            item: {
+              id: product.product_id || product.id,
+              title: product.product_name || product.title,
+              price: product.price || 1299.00
+            },
+            quantity: 1
+          }
+        ],
+        currency: "INR",
+        buyer: {
+          buyer_id: currentSessionId ? `agent_cust_${currentSessionId.substring(0, 8)}` : "agent_shopper_001",
+          shipping_address: {
+            city: "Bengaluru",
+            postal_code: "560001",
+            country: "IN"
+          }
+        }
+      };
+
+      // Fetch Discovery Manifest if not cached
+      if (!ucpDiscoveryData) {
+        try {
+          const res = await fetch('/.well-known/ucp');
+          ucpDiscoveryData = await res.json();
+        } catch (e) {
+          ucpDiscoveryData = { error: "Failed to load /.well-known/ucp", details: e.toString() };
+        }
+      }
+
+      // If we haven't created a checkout session yet, create one
+      if (!ucpCheckoutResponseData) {
+        await executeUCPCheckout();
+      }
+
+      switchUCPTab(ucpActiveTab);
+    }
+
+    function closeUCPModal() {
+      document.getElementById('ucpModal').classList.add('hidden');
+    }
+
+    async function executeUCPCheckout() {
+      try {
+        const display = document.getElementById('ucpJsonDisplay');
+        if (display && ucpActiveTab === 'response') {
+          display.innerText = "Generating UCP Checkout Session on business server...";
+        }
+        const res = await fetch('/ucp/v1/checkout-sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'UCP-Agent': 'profile="https://agent.virtualtryon.ai/profile"'
+          },
+          body: JSON.stringify(ucpCheckoutRequestData)
+        });
+        ucpCheckoutResponseData = await res.json();
+      } catch (err) {
+        ucpCheckoutResponseData = { error: "Failed to create UCP checkout session", details: err.toString() };
+      }
+    }
+
+    async function simulateUCPCheckout() {
+      const display = document.getElementById('ucpJsonDisplay');
+      display.innerText = "Invoking checkout capability: POST /ucp/v1/checkout-sessions ...";
+      await executeUCPCheckout();
+      switchUCPTab('response');
+    }
+
+    function switchUCPTab(tab) {
+      ucpActiveTab = tab;
+      const btn1 = document.getElementById('ucpTab1Btn');
+      const btn2 = document.getElementById('ucpTab2Btn');
+      const btn3 = document.getElementById('ucpTab3Btn');
+      const desc = document.getElementById('ucpTabDescription');
+      const statusBadge = document.getElementById('ucpStatusBadge');
+      const display = document.getElementById('ucpJsonDisplay');
+
+      // Reset button styles
+      [btn1, btn2, btn3].forEach(b => {
+        b.className = "px-3.5 py-1.5 rounded-lg font-semibold transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+      });
+
+      let jsonToRender = {};
+      if (tab === 'discovery') {
+        btn1.className = "px-3.5 py-1.5 rounded-lg font-semibold transition-all bg-indigo-600 text-white flex items-center gap-1.5 shadow";
+        desc.innerText = "Standard business capability manifest advertised at /.well-known/ucp";
+        statusBadge.innerText = "200 OK";
+        statusBadge.className = "bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded text-[10px] font-mono font-bold";
+        jsonToRender = ucpDiscoveryData || { status: "Loading..." };
+      } else if (tab === 'request') {
+        btn2.className = "px-3.5 py-1.5 rounded-lg font-semibold transition-all bg-indigo-600 text-white flex items-center gap-1.5 shadow";
+        desc.innerText = "Agent Checkout Request payload sent to POST /ucp/v1/checkout-sessions";
+        statusBadge.innerText = "POST /checkout-sessions";
+        statusBadge.className = "bg-indigo-950/80 text-indigo-400 border border-indigo-700/50 px-2 py-0.5 rounded text-[10px] font-mono font-bold";
+        jsonToRender = ucpCheckoutRequestData || { status: "Preparing..." };
+      } else if (tab === 'response') {
+        btn3.className = "px-3.5 py-1.5 rounded-lg font-semibold transition-all bg-indigo-600 text-white flex items-center gap-1.5 shadow";
+        desc.innerText = "Checkout Session Response created by merchant business server";
+        statusBadge.innerText = "201 Created";
+        statusBadge.className = "bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded text-[10px] font-mono font-bold";
+        jsonToRender = ucpCheckoutResponseData || { status: "Processing..." };
+      }
+
+      display.innerText = JSON.stringify(jsonToRender, null, 2);
+    }
+
+    function copyUCPJson() {
+      const display = document.getElementById('ucpJsonDisplay');
+      const copyText = document.getElementById('copyJsonText');
+      navigator.clipboard.writeText(display.innerText).then(() => {
+        copyText.innerText = "Copied!";
+        setTimeout(() => { copyText.innerText = "Copy JSON"; }, 2000);
+      });
+    }
+
+    function appendMessage(sender, htmlContent) {
+      if (!htmlContent || htmlContent === 'undefined') {
+        htmlContent = 'Processing completed.';
+      }
+      const chatBox = document.getElementById('chatBox');
+      const isUser = sender === 'user';
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+      
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble p-3.5 rounded-2xl max-w-[85%] border text-xs leading-relaxed ${
+        isUser 
+          ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none shadow-md' 
+          : 'bg-slate-700/80 text-slate-200 border-slate-600 rounded-tl-none shadow'
+      }`;
+      bubble.innerHTML = htmlContent;
+      
+      wrapper.appendChild(bubble);
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Auto-start session and preload catalog on page load
+    window.onload = () => {
+      loadCatalog();
+      startNewSession();
+    };
+  </script>
+</body>
+</html>

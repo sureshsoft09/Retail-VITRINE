@@ -9,7 +9,7 @@ if (Test-Path $KEY_PATH) {
     $env:GOOGLE_APPLICATION_CREDENTIALS = $KEY_PATH
 }
 
-# Check if build directory exists
+# Build production bundle if not present
 if (!(Test-Path "build")) {
     Write-Host "Building VitrineUI application for production..." -ForegroundColor Yellow
     npm run build
@@ -22,7 +22,7 @@ if (!(Test-Path "build")) {
 
 # Deploy ONLY to vitrine-merchant-commerce
 Write-Host "Deploying ONLY to site: vitrine-merchant-commerce..." -ForegroundColor Yellow
-firebase deploy --only hosting:vitrine-merchant-commerce --project $PROJECT_ID
+firebase deploy --only hosting:vitrine-merchant-commerce --project $PROJECT_ID --non-interactive
 
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "Deployment completed successfully!" -ForegroundColor Green
