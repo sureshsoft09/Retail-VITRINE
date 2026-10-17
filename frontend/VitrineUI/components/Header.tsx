@@ -86,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
 
   const navGroups = [
     {
-      group: "COMMERCE INTELLIGENCE",
+      group: "CATALOG",
       items: [
         {
           id: "tower" as NavTab,
@@ -97,19 +97,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
           icon: Compass,
         },
         {
-          id: "theatre" as NavTab,
-          label: "Agent Commerce Exchange",
-          sub: "Inbound Buyer Negotiation",
-          badge: "Live Watch",
+          id: "vto" as NavTab,
+          label: "Virtual Try-On Studio",
+          sub: "Live Vertex AI Fit Studio",
+          badge: "Live Model",
           badgeColor: "bg-[#7A2E3B]/10 text-[#7A2E3B] border-[#7A2E3B]/20",
-          icon: Bot,
+          icon: Shirt,
         },
-      ],
-    },
-    {
-      group: "CATALOG & PROMISE ASSURANCE",
-      items: [
-        {
+                {
           id: "brain" as NavTab,
           label: "Product Brain",
           sub: "Agentic Discoverability & Specs",
@@ -119,15 +114,20 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
               ? "bg-[#2D6A4F]/10 text-[#2D6A4F] border-[#2D6A4F]/20"
               : "bg-[#B7791F]/10 text-[#B7791F] border-[#B7791F]/20",
           icon: Sparkles,
-        },
-        {
-          id: "vto" as NavTab,
-          label: "Virtual Try-On Studio",
-          sub: "Live Vertex AI Fit Studio",
-          badge: "Live Model",
+        }
+      ],
+    },
+    {
+      group: "COMMERCE INTELLIGENCE",
+      items: [
+       {
+          id: "theatre" as NavTab,
+          label: "Agent Commerce Exchange",
+          sub: "Inbound Buyer Negotiation",
+          badge: "Live Watch",
           badgeColor: "bg-[#7A2E3B]/10 text-[#7A2E3B] border-[#7A2E3B]/20",
-          icon: Shirt,
-        },
+          icon: Bot,
+        },        
         {
           id: "promise" as NavTab,
           label: "Promise Intelligence",
@@ -136,10 +136,18 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
           badgeColor: "bg-[#2D6A4F]/10 text-[#2D6A4F] border-[#2D6A4F]/20",
           icon: Cpu,
         },
+                {
+          id: "ledger" as NavTab,
+          label: "Audit Ledger",
+          sub: "Cryptographic SHA-256 Proof",
+          badge: `${ledgerCommitments.length} Sealed`,
+          badgeColor: "bg-[#1C1917]/10 text-[#1C1917] border-[#1C1917]/20",
+          icon: FileCheck2,
+        }
       ],
     },
     {
-      group: "TRUST, AUDIT & GOVERNANCE",
+      group: "TRUST & GOVERNANCE",
       items: [
         {
           id: "fraud" as NavTab,
@@ -149,14 +157,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
           badgeColor: "bg-[#9E4736]/10 text-[#9E4736] border-[#9E4736]/20",
           icon: ShieldAlert,
         },
-        {
-          id: "ledger" as NavTab,
-          label: "Audit Ledger",
-          sub: "Cryptographic SHA-256 Proof",
-          badge: `${ledgerCommitments.length} Sealed`,
-          badgeColor: "bg-[#1C1917]/10 text-[#1C1917] border-[#1C1917]/20",
-          icon: FileCheck2,
-        },
+
         {
           id: "governance" as NavTab,
           label: "Governance Guardrails",

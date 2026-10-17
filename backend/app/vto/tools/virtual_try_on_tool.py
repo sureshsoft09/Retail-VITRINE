@@ -78,20 +78,34 @@ def _generate_fallback_try_on_image(person_uri: str = "", product_uri: str = "")
                 logger.warning(f"Could not load garment image for composite preview: {e}")
 
         if person_pil:
-            # Resize customer photo and fit into canvas center
-            person_pil = person_pil.resize((360, 480))
-            canvas.paste(person_pil, (120, 110))
-            draw.rectangle([120, 110, 480, 590], outline=(129, 140, 248), width=2)
+            # Resize customer photo to fill portrait frame
+            p_w, p_h = person_pil.size
+            target_h = 500
+            target_w = int(p_w * (target_h / max(p_h, 1)))
+            if target_w > 460:
+                target_w = 460
+            person_resized = person_pil.resize((target_w, target_h))
+            # Center person on canvas
+            pos_x = (600 - target_w) // 2
+            canvas.paste(person_resized, (pos_x, 95))
+            draw.rectangle([pos_x, 95, pos_x + target_w, 95 + target_h], outline=(129, 140, 248), width=2)
 
-            # If garment photo loaded, overlay garment thumbnail badge
+            # If garment photo loaded, overlay garment onto torso area with natural fit
             if garment_pil:
-                garment_thumb = garment_pil.resize((100, 110))
-                canvas.paste(garment_thumb, (360, 460))
-                draw.rectangle([360, 460, 460, 570], outline=(245, 158, 11), width=2)
+                g_w, g_h = garment_pil.size
+                fit_w = int(target_w * 0.72)
+                fit_h = int(g_h * (fit_w / max(g_w, 1)))
+                if fit_h > int(target_h * 0.58):
+                    fit_h = int(target_h * 0.58)
+                garment_fitted = garment_pil.resize((fit_w, fit_h))
+                paste_x = pos_x + (target_w - fit_w) // 2
+                paste_y = 95 + int(target_h * 0.22)
+                canvas.paste(garment_fitted, (paste_x, paste_y))
+                draw.rectangle([paste_x, paste_y, paste_x + fit_w, paste_y + fit_h], outline=(245, 158, 11), width=2)
 
-            # Draw garment tag overlay
-            draw.rectangle([130, 530, 350, 580], fill=(15, 23, 42))
-            draw.text((240, 555), f"Item: {prod_name}", fill=(224, 231, 255), anchor="mm")
+            # Draw garment tag overlay badge
+            draw.rectangle([130, 605, 470, 645], fill=(15, 23, 42))
+            draw.text((300, 625), f"Fitted Garment: {prod_name}", fill=(224, 231, 255), anchor="mm")
         elif garment_pil:
             # Display garment prominently
             garment_pil = garment_pil.resize((360, 450))

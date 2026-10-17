@@ -3,7 +3,11 @@
 Loads application configuration from environment variables or .env file using Pydantic Settings.
 """
 
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_backend_dir = Path(__file__).resolve().parent.parent.parent
+_env_file = _backend_dir / ".env"
 
 
 class Settings(BaseSettings):
@@ -13,9 +17,9 @@ class Settings(BaseSettings):
     gcp_region: str = "us-central1"
 
     # Private Cloud Storage Bucket Names
-    product_bucket: str = "demo-product-bucket"
-    temp_bucket: str = "demo-temp-customer-bucket"
-    output_bucket: str = "demo-output-tryon-bucket"
+    product_bucket: str = "gcp-aibuildercup-project-retail-products"
+    temp_bucket: str = "gcp-aibuildercup-project-retail-temp"
+    output_bucket: str = "gcp-aibuildercup-project-retail-outputs"
 
     # Firestore Database Collection
     firestore_collection: str = "products"
@@ -31,7 +35,7 @@ class Settings(BaseSettings):
     delete_temp_on_cleanup: bool = True
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[str(_env_file), ".env"],
         env_file_encoding="utf-8",
         extra="ignore",
     )

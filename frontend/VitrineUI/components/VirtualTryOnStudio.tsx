@@ -93,6 +93,11 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
       // Default select the first flagship garment (e.g. SKU-4829 Mulberry Silk Blouse)
       if (prods.length > 0) {
         setSelectedProduct(prods[0]);
+        try {
+          await api.vto.selectProduct(session.session_id, prods[0].product_id);
+        } catch (e) {
+          // ignore
+        }
       }
 
       setMessages([
@@ -175,6 +180,9 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
   const handleSelectProduct = async (product: VtoProduct) => {
     setSelectedProduct(product);
     setSelectedSize(product.size[0] || "M");
+    // Clear previous try-on result so the user can generate with the new garment
+    setTryOnResultUrl(null);
+    setViewMode("result");
 
     if (sessionId) {
       try {
@@ -190,6 +198,8 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhotoFile(file);
+      // Reset previous try-on output so user can generate with their new photo
+      setTryOnResultUrl(null);
 
       // Local preview
       const previewReader = new FileReader();
@@ -204,11 +214,22 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
         if (sessionId) {
           const res = await api.vto.uploadPhoto(sessionId, file);
           setPhotoValidated(res.is_valid);
+          if (res.message) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `agent-upload-${Date.now()}`,
+                sender: "agent",
+                text: res.message,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              },
+            ]);
+          }
         } else {
           setPhotoValidated(true);
         }
       } catch (err) {
-        console.warn("Photo validation notice, proceeding in preview mode:", err);
+        console.warn("Photo validation notice, proceeding:", err);
         setPhotoValidated(true);
       } finally {
         setIsUploadingPhoto(false);
@@ -218,7 +239,15 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
 
   // Generate Try-On
   const handleGenerateTryOn = async () => {
-    if (!selectedProduct) return;
+    if (!selectedProduct) {
+      alert("Please select a garment from the catalog.");
+      return;
+    }
+    if (!photoFile && !photoPreview) {
+      alert("Please upload your portrait photo first.");
+      return;
+    }
+
     setIsGenerating(true);
     setGenerationStep("Analyzing silhouette & posture alignment...");
 
@@ -229,26 +258,43 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
 
       const step2 = setTimeout(() => {
         setGenerationStep("Synthesizing realistic fabric drape, folds & texture...");
-      }, 2500);
+      }, 3500);
 
       let res;
       if (sessionId) {
+        try {
+          await api.vto.selectProduct(sessionId, selectedProduct.product_id);
+        } catch (e) {
+          // ignore
+        }
         res = await api.vto.generateTryOn(sessionId, true);
       }
 
       clearTimeout(step1);
       clearTimeout(step2);
 
-      if (res && res.try_on_image_url) {
+      if (res && res.try_on_image_url && res.status === "COMPLETED") {
         setTryOnResultUrl(res.try_on_image_url);
+        setViewMode("result");
+        if (res.message) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `agent-gen-${Date.now()}`,
+              sender: "agent",
+              text: res.message,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+        }
       } else {
-        // If live model returns preview or local image
-        setTryOnResultUrl(selectedProduct.product_image_url || null);
+        const errorMsg = res?.message || "Virtual Try-On generation could not be completed. Please ensure your photo is clear and retry.";
+        console.error("Generation failed:", errorMsg);
+        alert(errorMsg);
       }
     } catch (err: any) {
-      console.warn("Generation error, rendering high-fidelity composite:", err);
-      // High-fidelity fallback preview
-      setTryOnResultUrl(selectedProduct.product_image_url || null);
+      console.error("Generation error:", err);
+      alert(err?.message || "Virtual try-on service encountered an error. Please retry.");
     } finally {
       setIsGenerating(false);
       setGenerationStep("");
@@ -775,11 +821,17 @@ export const VirtualTryOnStudio: React.FC<VirtualTryOnStudioProps> = ({ onNaviga
               {!tryOnResultUrl && !isGenerating && (
                 <button
                   onClick={handleGenerateTryOn}
-                  disabled={!selectedProduct}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7A2E3B] to-[#9B3D4C] hover:from-[#63242F] hover:to-[#7A2E3B] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50"
+                  disabled={!selectedProduct || (!photoFile && !photoPreview) || isUploadingPhoto}
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7A2E3B] to-[#9B3D4C] hover:from-[#63242F] hover:to-[#7A2E3B] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>Generate Virtual Try-On (`virtual-try-on-001`)</span>
+                  <span>
+                    {isUploadingPhoto
+                      ? "Uploading Portrait Photo..."
+                      : (!photoFile && !photoPreview)
+                      ? "Step 1: Upload Your Photo Above to Try On"
+                      : "Generate Virtual Try-On (`virtual-try-on-001`)"}
+                  </span>
                 </button>
               )}
 

@@ -17,6 +17,7 @@ import {
 const BFF_BASE = import.meta.env.VITE_BFF_API_URL || "https://vitrine-bff-285078287322.us-central1.run.app";
 const UCP_BASE = import.meta.env.VITE_UCP_API_URL || "https://vitrine-ucp-285078287322.us-central1.run.app";
 
+
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...options,
@@ -467,34 +468,6 @@ export const api = {
       } catch (err) {
         console.warn("Failed to fetch VTO products from BFF, falling back to local list:", err);
         return [
-          {
-            product_id: "SKU-4829-SILK-BLOUSE",
-            product_name: "100% Mulberry Silk Draped Blouse — Ivory",
-            category: "blouse",
-            size: ["XS", "S", "M", "L"],
-            color: "ivory",
-            neck_type: "draped neck",
-            sleeve_type: "long sleeve",
-            brand: "Maison Vitrine",
-            price: 128.0,
-            currency: "USD",
-            stock_status: "in_stock",
-            product_image_url: `${BFF_BASE}/api/vto/products/SKU-4829-SILK-BLOUSE/image`,
-          },
-          {
-            product_id: "SKU-4830-SILK-SHIRT",
-            product_name: "Relaxed French Linen-Silk Shirt — Ivory",
-            category: "shirt",
-            size: ["XS", "S", "M", "L"],
-            color: "ivory",
-            neck_type: "collar",
-            sleeve_type: "long sleeve",
-            brand: "Maison Vitrine",
-            price: 134.0,
-            currency: "USD",
-            stock_status: "in_stock",
-            product_image_url: `${BFF_BASE}/api/vto/products/SKU-4830-SILK-SHIRT/image`,
-          },
           {
             product_id: "TSHIRT-1001",
             product_name: "Yellow Crew Neck Essential T-Shirt",

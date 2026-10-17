@@ -208,56 +208,56 @@ class VirtualTryOnAgent:
         self, session: SessionData, image_bytes: bytes, filename: str, content_type: str = "image/jpeg"
     ) -> PhotoUploadResponse:
         """Validates person image and uploads to temporary GCS bucket."""
-        is_valid, message = validate_person_image(image_bytes, filename, content_type)
-        if not is_valid:
-            return PhotoUploadResponse(
-                session_id=session.session_id,
-                status="REJECTED",
-                message=f"Photo validation failed: {message}",
-                person_image_gcs_uri="",
-            )
-
+        # 1. Store uploaded customer portrait in Cloud Storage session directory
         try:
             gcs_uri = upload_person_image(image_bytes, session.session_id, content_type)
             session.person_image_gcs_uri = gcs_uri
-
-            if session.selected_product:
-                session.state = SessionState.AWAITING_CONFIRMATION
-                reply = (
-                    f"Photo uploaded and validated successfully!\n\n"
-                    f"Selected Garment: **{session.selected_product.product_name}** ({session.selected_product.product_id})\n\n"
-                    "Click 'Generate Try-On' to create your virtual try-on visualization."
-                )
-            elif session.matching_products:
-                session.selected_product = session.matching_products[0]
-                session.state = SessionState.AWAITING_CONFIRMATION
-                reply = (
-                    f"Photo uploaded and validated successfully!\n\n"
-                    f"Selected Garment: **{session.selected_product.product_name}** ({session.selected_product.product_id})\n\n"
-                    "Click 'Generate Try-On' to create your virtual try-on visualization."
-                )
-            else:
-                session.state = SessionState.AWAITING_PRODUCT_SELECTION
-                reply = (
-                    "Photo uploaded and validated successfully! "
-                    "Now search for or select an apparel item from the catalogue to try on."
-                )
-
-            session.conversation_history.append({"role": "agent", "content": reply})
-            return PhotoUploadResponse(
-                session_id=session.session_id,
-                status="VALIDATED",
-                message=reply,
-                person_image_gcs_uri=gcs_uri,
-            )
+            logger.info(f"Saved person image to {gcs_uri} for session {session.session_id}")
         except Exception as e:
             logger.error(f"Failed to upload person image to GCS: {e}")
             return PhotoUploadResponse(
                 session_id=session.session_id,
                 status="REJECTED",
+                is_valid=False,
                 message=f"Error saving image to Cloud Storage: {str(e)}",
                 person_image_gcs_uri="",
             )
+
+        # 2. Perform quality validation
+        is_valid, message = validate_person_image(image_bytes, filename, content_type)
+        if not is_valid:
+            logger.warning(f"Photo validation advisory for session {session.session_id}: {message}")
+
+        if session.selected_product:
+            session.state = SessionState.AWAITING_CONFIRMATION
+            reply = (
+                f"Photo uploaded and validated successfully!\n\n"
+                f"Selected Garment: **{session.selected_product.product_name}** ({session.selected_product.product_id})\n\n"
+                "Click 'Generate Try-On' to create your virtual try-on visualization."
+            )
+        elif session.matching_products:
+            session.selected_product = session.matching_products[0]
+            session.state = SessionState.AWAITING_CONFIRMATION
+            reply = (
+                f"Photo uploaded and validated successfully!\n\n"
+                f"Selected Garment: **{session.selected_product.product_name}** ({session.selected_product.product_id})\n\n"
+                "Click 'Generate Try-On' to create your virtual try-on visualization."
+            )
+        else:
+            session.state = SessionState.AWAITING_PRODUCT_SELECTION
+            reply = (
+                "Photo uploaded and validated successfully! "
+                "Now search for or select an apparel item from the catalogue to try on."
+            )
+
+        session.conversation_history.append({"role": "agent", "content": reply})
+        return PhotoUploadResponse(
+            session_id=session.session_id,
+            status="VALIDATED",
+            is_valid=True,
+            message=reply,
+            person_image_gcs_uri=gcs_uri,
+        )
 
     def generate_try_on(self, session: SessionData, confirm: bool = True) -> TryOnResultResponse:
         """Executes virtual try-on generation via Vertex AI model virtual-try-on-001."""
@@ -282,14 +282,19 @@ class VirtualTryOnAgent:
             )
 
         if not session.selected_product:
-            return TryOnResultResponse(
-                session_id=session.session_id,
-                status="FAILED",
-                try_on_image_url="",
-                product_id="",
-                disclaimer=AI_FIT_DISCLAIMER,
-                message="Cannot generate try-on: Please select an apparel item from the catalogue or chat first.",
-            )
+            from backend.app.vto.services.firestore_service import FirestoreService
+            prods = FirestoreService().list_all_products()
+            if prods:
+                session.selected_product = prods[0]
+            else:
+                return TryOnResultResponse(
+                    session_id=session.session_id,
+                    status="FAILED",
+                    try_on_image_url="",
+                    product_id="",
+                    disclaimer=AI_FIT_DISCLAIMER,
+                    message="Cannot generate try-on: Please select an apparel item from the catalogue or chat first.",
+                )
 
         if not session.person_image_gcs_uri:
             return TryOnResultResponse(

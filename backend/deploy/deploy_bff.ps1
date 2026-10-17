@@ -15,19 +15,18 @@ Write-Host "==========================================================" -Foregro
 # Set project
 gcloud config set project $PROJECT_ID
 
-Push-Location (Join-Path $PSScriptRoot "..\..")
+# Temporarily copy Dockerfile to root for Cloud Build
 $rootDockerfile = "Dockerfile"
-try {
-    # Temporarily copy Dockerfile to root for Cloud Build
-    Copy-Item "backend/deploy/bff.Dockerfile" -Destination $rootDockerfile -Force
+Copy-Item "backend/deploy/bff.Dockerfile" -Destination $rootDockerfile -Force
 
+try {
     # Deploy to Cloud Run using root source
     gcloud run deploy $SERVICE_NAME `
         --source . `
         --region $REGION `
         --allow-unauthenticated `
         --service-account $SA_EMAIL `
-        --set-env-vars "GCP_PROJECT_ID=$PROJECT_ID,PROJECT_ID=$PROJECT_ID,GCP_REGION=$REGION,BQ_DATASET_CATALOG=vitrine_commerce,BQ_DATASET_LEDGER=vitrine_commerce,AGENT_ENGINE_RESOURCE_NAME=projects/285078287322/locations/us-central1/reasoningEngines/4500934686062673920,AGENTS_HOST_URL=https://vitrine-agents-host-285078287322.us-central1.run.app" `
+        --set-env-vars "GCP_PROJECT_ID=$PROJECT_ID,PROJECT_ID=$PROJECT_ID,GCP_REGION=$REGION,BQ_DATASET_CATALOG=vitrine_commerce,BQ_DATASET_LEDGER=vitrine_commerce,AGENT_ENGINE_RESOURCE_NAME=projects/285078287322/locations/us-central1/reasoningEngines/4500934686062673920,AGENTS_HOST_URL=https://vitrine-agents-host-285078287322.us-central1.run.app,PRODUCT_BUCKET=gcp-aibuildercup-project-retail-products,TEMP_BUCKET=gcp-aibuildercup-project-retail-temp,OUTPUT_BUCKET=gcp-aibuildercup-project-retail-outputs,GEMINI_MODEL_ID=gemini-2.5-flash,TRY_ON_MODEL_ID=virtual-try-on-001" `
         --timeout 600
 
     if ($LASTEXITCODE -eq 0) {
@@ -42,5 +41,4 @@ try {
     if (Test-Path $rootDockerfile) {
         Remove-Item $rootDockerfile -Force
     }
-    Pop-Location
 }

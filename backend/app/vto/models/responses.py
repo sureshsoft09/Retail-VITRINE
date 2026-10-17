@@ -53,6 +53,8 @@ class PhotoUploadResponse(BaseModel):
     gcs_uri: Optional[str] = None
 
     def model_post_init(self, __context):
+        if self.status == "REJECTED":
+            self.is_valid = False
         if not self.gcs_uri and self.person_image_gcs_uri:
             self.gcs_uri = self.person_image_gcs_uri
         elif not self.person_image_gcs_uri and self.gcs_uri:
