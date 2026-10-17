@@ -15,11 +15,12 @@ Write-Host "==========================================================" -Foregro
 # Set project
 gcloud config set project $PROJECT_ID
 
-# Temporarily copy Dockerfile to root for Cloud Build
+Push-Location (Join-Path $PSScriptRoot "..\..")
 $rootDockerfile = "Dockerfile"
-Copy-Item "backend/deploy/bff.Dockerfile" -Destination $rootDockerfile -Force
-
 try {
+    # Temporarily copy Dockerfile to root for Cloud Build
+    Copy-Item "backend/deploy/bff.Dockerfile" -Destination $rootDockerfile -Force
+
     # Deploy to Cloud Run using root source
     gcloud run deploy $SERVICE_NAME `
         --source . `
@@ -41,4 +42,5 @@ try {
     if (Test-Path $rootDockerfile) {
         Remove-Item $rootDockerfile -Force
     }
+    Pop-Location
 }

@@ -46,6 +46,7 @@ Thumbs.db
 
 # Secrets & Local Config
 .env
+.env.production
 *.local
 credentials.json
 service-account-key.json
